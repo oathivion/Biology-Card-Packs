@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.model.MiniGameSession
+import com.wilddeck.app.model.TriviaQuestion
 import com.wilddeck.app.ui.screens.MiniGameScreen
 import com.wilddeck.app.ui.theme.WildDeckTheme
 import org.junit.Assert.assertEquals
@@ -17,15 +18,22 @@ class MiniGameScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun foodButton_respondsToTap() {
+    fun answerButton_respondsToTap() {
         val card = SampleData.animalCards.first()
         val frame = SampleData.frames.first()
+        val question = TriviaQuestion(
+            id = "lion_food",
+            prompt = "What does a lion eat?",
+            options = listOf("Meat", "Grass", "Algae", "Plankton"),
+            correctAnswer = "Meat"
+        )
         var selected: String? = null
         composeRule.setContent {
             WildDeckTheme {
                 MiniGameScreen(
-                    session = MiniGameSession(card, listOf(card.food, "Grass")),
+                    session = MiniGameSession(card, listOf(question)),
                     frame = frame,
+                    feedback = null,
                     onStart = {},
                     onAnswer = { selected = it },
                     onCollection = {}
@@ -33,24 +41,31 @@ class MiniGameScreenTest {
             }
         }
 
-        composeRule.onNodeWithTag("food_${card.food}").performClick()
+        composeRule.onNodeWithTag("answer_0").performClick()
 
-        composeRule.runOnIdle { assertEquals(card.food, selected) }
+        composeRule.runOnIdle { assertEquals("Meat", selected) }
     }
 
     @Test
     fun rewardedSession_showsRewardMessage() {
         val card = SampleData.animalCards.first()
+        val question = TriviaQuestion(
+            id = "lion_food",
+            prompt = "What does a lion eat?",
+            options = listOf("Meat", "Grass", "Algae", "Plankton"),
+            correctAnswer = "Meat"
+        )
         composeRule.setContent {
             WildDeckTheme {
                 MiniGameScreen(
                     session = MiniGameSession(
                         targetCard = card,
-                        foodOptions = listOf(card.food),
+                        questions = listOf(question),
                         matchCount = 3,
                         isRewarded = true
                     ),
                     frame = SampleData.frames.first(),
+                    feedback = "Card added to inventory.",
                     onStart = {},
                     onAnswer = {},
                     onCollection = {}
@@ -59,5 +74,31 @@ class MiniGameScreenTest {
         }
 
         composeRule.onNodeWithTag("reward_message").assertIsDisplayed()
+    }
+
+    @Test
+    fun inlineFeedback_doesNotReplaceAnyAnswer() {
+        val card = SampleData.animalCards.first()
+        val question = TriviaQuestion(
+            id = "lion_food",
+            prompt = "What does a lion eat?",
+            options = listOf("Grass", "Algae", "Plankton", "Meat"),
+            correctAnswer = "Meat"
+        )
+        composeRule.setContent {
+            WildDeckTheme {
+                MiniGameScreen(
+                    session = MiniGameSession(card, listOf(question)),
+                    frame = SampleData.frames.first(),
+                    feedback = "Correct! Next question.",
+                    onStart = {},
+                    onAnswer = {},
+                    onCollection = {}
+                )
+            }
+        }
+
+        composeRule.onNodeWithTag("answer_feedback").assertIsDisplayed()
+        repeat(4) { composeRule.onNodeWithTag("answer_$it").assertExists() }
     }
 }

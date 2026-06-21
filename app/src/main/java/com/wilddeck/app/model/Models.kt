@@ -62,10 +62,21 @@ data class DeckScore(
 
 data class MiniGameSession(
     val targetCard: AnimalCard,
-    val foodOptions: List<String>,
+    val questions: List<TriviaQuestion>,
+    val questionIndex: Int = 0,
     val matchCount: Int = 0,
     val requiredMatchCount: Int = 3,
     val isRewarded: Boolean = false
+) {
+    val currentQuestion: TriviaQuestion
+        get() = questions[questionIndex]
+}
+
+data class TriviaQuestion(
+    val id: String,
+    val prompt: String,
+    val options: List<String>,
+    val correctAnswer: String
 )
 
 data class PersistedPlayerData(

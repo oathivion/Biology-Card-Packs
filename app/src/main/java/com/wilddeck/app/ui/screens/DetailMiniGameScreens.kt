@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -84,6 +85,7 @@ private fun DetailBlock(title: String, value: String) {
 fun MiniGameScreen(
     session: MiniGameSession?,
     frame: CardFrame?,
+    feedback: String?,
     onStart: () -> Unit,
     onAnswer: (String) -> Unit,
     onCollection: () -> Unit
@@ -94,8 +96,8 @@ fun MiniGameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Food Match", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-            Text("Identify what an animal eats. Three correct matches earns the card.")
+            Text("Animal Trivia", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            Text("Answer animal questions. Reach three progress points to earn a new card.")
             Spacer(Modifier.height(20.dp))
             Button(onClick = onStart, modifier = Modifier.testTag("start_game")) { Text("Start") }
         }
@@ -108,7 +110,7 @@ fun MiniGameScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Food Match", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+            Text("Animal Trivia", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
             Text("${session.matchCount}/${session.requiredMatchCount}", style = MaterialTheme.typography.headlineSmall)
         }
         AnimalCardView(
@@ -127,13 +129,34 @@ fun MiniGameScreen(
             Button(onClick = onCollection, modifier = Modifier.fillMaxWidth()) { Text("View Collection") }
             OutlinedButton(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
         } else {
-            Text("What does this animal eat?", style = MaterialTheme.typography.titleMedium)
-            session.foodOptions.forEach { food ->
-                Button(
-                    onClick = { onAnswer(food) },
-                    modifier = Modifier.fillMaxWidth().testTag("food_$food")
+            feedback?.let {
+                Surface(
+                    color = if (it.startsWith("Correct")) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.errorContainer
+                    },
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().testTag("answer_feedback")
                 ) {
-                    Text(food)
+                    Text(
+                        text = it,
+                        modifier = Modifier.padding(12.dp),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+            Text(
+                session.currentQuestion.prompt,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.fillMaxWidth().testTag("trivia_prompt")
+            )
+            session.currentQuestion.options.forEachIndexed { index, option ->
+                OutlinedButton(
+                    onClick = { onAnswer(option) },
+                    modifier = Modifier.fillMaxWidth().testTag("answer_$index")
+                ) {
+                    Text(option, modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
         }

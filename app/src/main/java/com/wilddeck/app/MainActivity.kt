@@ -133,8 +133,9 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                 MiniGameScreen(
                     session = session,
                     frame = session?.targetCard?.currentFrameId?.let(framesById::get),
+                    feedback = state.miniGameFeedback,
                     onStart = viewModel::startMiniGame,
-                    onAnswer = viewModel::answerFood,
+                    onAnswer = viewModel::answerTrivia,
                     onCollection = { navController.navigate(Routes.COLLECTION) }
                 )
             }

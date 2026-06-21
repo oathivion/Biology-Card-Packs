@@ -29,6 +29,7 @@ data class WildDeckUiState(
     val unlockedFrameIds: Set<String> = emptySet(),
     val selectedFrames: Map<String, String> = emptyMap(),
     val miniGameSession: MiniGameSession? = null,
+    val miniGameFeedback: String? = null,
     val message: String? = null
 )
 
@@ -45,6 +46,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         loaded.selectedFrames
     )
     private val miniGameManager = MiniGameManager(SampleData.animalCards)
+    private var previousMiniGameCardId: String? = null
 
     var uiState by mutableStateOf(WildDeckUiState())
         private set
@@ -60,21 +62,28 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         symbiosisManager.score(cardIds, catalog).activeRelationships
 
     fun startMiniGame() {
-        val session = miniGameManager.startSession()
+        val excludedIds = inventory.allIds() + listOfNotNull(previousMiniGameCardId)
+        val session = miniGameManager.startSession(excludedIds)
+        session?.let { previousMiniGameCardId = it.targetCard.id }
         uiState = uiState.copy(
             miniGameSession = session,
-            message = if (session == null) "No animal cards are available." else null
+            miniGameFeedback = null,
+            message = if (session == null) {
+                "No new animal is available. You may already own every card."
+            } else {
+                null
+            }
         )
     }
 
-    fun answerFood(food: String) {
+    fun answerTrivia(answerText: String) {
         val session = uiState.miniGameSession ?: run {
-            showMessage("No food options are available.")
+            showMessage("No trivia question is available.")
             return
         }
-        val (updated, answer) = miniGameManager.answer(session, food)
+        val (updated, answer) = miniGameManager.answer(session, answerText)
         answer.cardAwarded?.let { inventory.addCard(it.id) }
-        publish(session = updated, message = answer.message)
+        publish(session = updated, gameFeedback = answer.message)
     }
 
     fun createDeck(name: String) {
@@ -124,6 +133,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
 
     private fun publish(
         session: MiniGameSession? = uiState.miniGameSession,
+        gameFeedback: String? = uiState.miniGameFeedback,
         message: String? = uiState.message
     ) {
         val persisted = PersistedPlayerData(
@@ -141,6 +151,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             unlockedFrameIds = frameManager.unlockedIds(),
             selectedFrames = frameManager.selectedFrames(),
             miniGameSession = session?.copy(targetCard = session.targetCard.withSelectedFrame()),
+            miniGameFeedback = gameFeedback,
             message = message
         )
     }

@@ -83,14 +83,18 @@ class GameManagersTest {
     @Test
     fun miniGame_incorrectAnswerDoesNotAdvance() {
         val manager = MiniGameManager(SampleData.animalCards, Random(7))
-        val session = requireNotNull(manager.startSession())
-        val wrong = session.foodOptions.first { it != session.targetCard.food }
+        val initial = requireNotNull(manager.startSession())
+        val session = initial.copy(matchCount = 2)
+        val wrong = session.currentQuestion.options.first {
+            it != session.currentQuestion.correctAnswer
+        }
 
         val (updated, result) = manager.answer(session, wrong)
 
         assertFalse(result.isCorrect)
-        assertEquals("Incorrect food.", result.message)
-        assertEquals(0, updated.matchCount)
+        assertEquals("Incorrect. Progress decreased by 1.", result.message)
+        assertEquals(1, updated.matchCount)
+        assertTrue(updated.currentQuestion.id != session.currentQuestion.id)
     }
 
     @Test
@@ -98,19 +102,46 @@ class GameManagersTest {
         val manager = MiniGameManager(SampleData.animalCards, Random(4))
         var session = requireNotNull(manager.startSession())
         repeat(2) {
-            val (updated, result) = manager.answer(session, session.targetCard.food)
+            val (updated, result) = manager.answer(session, session.currentQuestion.correctAnswer)
             session = updated
             assertNull(result.cardAwarded)
         }
 
-        val (won, reward) = manager.answer(session, session.targetCard.food)
-        val (unchanged, repeated) = manager.answer(won, won.targetCard.food)
+        val (won, reward) = manager.answer(session, session.currentQuestion.correctAnswer)
+        val (unchanged, repeated) = manager.answer(won, won.currentQuestion.correctAnswer)
 
         assertTrue(won.isRewarded)
         assertEquals(3, won.matchCount)
         assertNotNull(reward.cardAwarded)
         assertEquals(won, unchanged)
         assertNull(repeated.cardAwarded)
+    }
+
+    @Test
+    fun miniGame_hasTenUniqueTriviaQuestionsForEveryAnimal() {
+        val manager = MiniGameManager(SampleData.animalCards, Random(9))
+
+        SampleData.animalCards.forEach { card ->
+            val questions = manager.createQuestions(card)
+            assertEquals(10, questions.size)
+            assertEquals(10, questions.map { it.id }.toSet().size)
+            questions.forEach { question ->
+                assertEquals(4, question.options.size)
+                assertTrue(question.correctAnswer in question.options)
+            }
+        }
+    }
+
+    @Test
+    fun miniGame_excludesOwnedAndPreviouslyPlayedAnimals() {
+        val excludedIds = SampleData.animalCards.dropLast(1).map { it.id }.toSet()
+        val expected = SampleData.animalCards.last()
+        val manager = MiniGameManager(SampleData.animalCards, Random(2))
+
+        val session = requireNotNull(manager.startSession(excludedIds))
+
+        assertEquals(expected.id, session.targetCard.id)
+        assertNull(manager.startSession(SampleData.animalCards.map { it.id }.toSet()))
     }
 
     @Test

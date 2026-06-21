@@ -8,6 +8,7 @@ import com.wilddeck.app.model.MiniGameAnswer
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.RuleResult
 import com.wilddeck.app.model.SymbiosisRelationship
+import com.wilddeck.app.model.TriviaQuestion
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -133,35 +134,96 @@ class MiniGameManager(
     private val cards: List<AnimalCard>,
     private val random: Random = Random.Default
 ) {
-    fun startSession(): MiniGameSession? {
-        if (cards.isEmpty()) return null
-        val target = cards[random.nextInt(cards.size)]
-        val wrongFoods = cards.asSequence()
-            .map { it.food }
-            .filter { it != target.food }
+    fun startSession(excludedCardIds: Set<String> = emptySet()): MiniGameSession? {
+        val availableCards = cards.filterNot { it.id in excludedCardIds }
+        if (availableCards.isEmpty()) return null
+        val target = availableCards[random.nextInt(availableCards.size)]
+        return MiniGameSession(
+            targetCard = target,
+            questions = createQuestions(target).shuffled(random)
+        )
+    }
+
+    fun answer(session: MiniGameSession, selectedAnswer: String): Pair<MiniGameSession, MiniGameAnswer> {
+        if (session.isRewarded) {
+            return session to MiniGameAnswer(false, "Card already awarded.")
+        }
+        val isCorrect = selectedAnswer == session.currentQuestion.correctAnswer
+        val newCount = if (isCorrect) {
+            session.matchCount + 1
+        } else {
+            (session.matchCount - 1).coerceAtLeast(0)
+        }
+        val won = newCount >= session.requiredMatchCount
+        val nextQuestionIndex = (session.questionIndex + 1) % session.questions.size
+        val updated = session.copy(
+            questionIndex = nextQuestionIndex,
+            matchCount = newCount,
+            isRewarded = won
+        )
+        val answer = if (won && isCorrect) {
+            MiniGameAnswer(true, "Card added to inventory.", session.targetCard)
+        } else if (isCorrect) {
+            MiniGameAnswer(true, "Correct! Next question.")
+        } else {
+            MiniGameAnswer(false, "Incorrect. Progress decreased by 1.")
+        }
+        return updated to answer
+    }
+
+    fun createQuestions(target: AnimalCard): List<TriviaQuestion> = listOf(
+        question(target, "food", "What is a typical food for ${target.name}?", target.food) { it.food },
+        question(target, "habitat", "Where does ${target.name} naturally live?", target.habitat) { it.habitat },
+        question(target, "species", "Which animal group best describes ${target.name}?", target.species) { it.species },
+        question(target, "health", "What health value does ${target.name} have?", target.health.toString()) { it.health.toString() },
+        question(target, "danger", "What danger value does ${target.name} have?", target.danger.toString()) { it.danger.toString() },
+        question(
+            target,
+            "rarity",
+            "What is ${target.name}'s card rarity?",
+            target.rarity.name.lowercase().replaceFirstChar(Char::uppercase)
+        ) { it.rarity.name.lowercase().replaceFirstChar(Char::uppercase) },
+        question(target, "description", "Which fact describes ${target.name}?", target.description) { it.description },
+        question(
+            target,
+            "health_reason",
+            "Which fact explains ${target.name}'s health value?",
+            target.healthExplanation
+        ) { it.healthExplanation },
+        question(
+            target,
+            "danger_reason",
+            "Which fact explains ${target.name}'s danger value?",
+            target.dangerExplanation
+        ) { it.dangerExplanation },
+        question(
+            target,
+            "identity",
+            "Which animal matches the card and facts shown above?",
+            target.name
+        ) { it.name }
+    )
+
+    private fun question(
+        target: AnimalCard,
+        idSuffix: String,
+        prompt: String,
+        correctAnswer: String,
+        answerFor: (AnimalCard) -> String
+    ): TriviaQuestion {
+        val distractors = cards.asSequence()
+            .filter { it.id != target.id }
+            .map(answerFor)
+            .filter { it != correctAnswer }
             .distinct()
             .shuffled(random)
             .take(3)
             .toList()
-        val options = (wrongFoods + target.food).shuffled(random)
-        return MiniGameSession(targetCard = target, foodOptions = options)
-    }
-
-    fun answer(session: MiniGameSession, selectedFood: String): Pair<MiniGameSession, MiniGameAnswer> {
-        if (session.isRewarded) {
-            return session to MiniGameAnswer(false, "Card already awarded.")
-        }
-        if (selectedFood != session.targetCard.food) {
-            return session to MiniGameAnswer(false, "Incorrect food.")
-        }
-        val newCount = session.matchCount + 1
-        val won = newCount >= session.requiredMatchCount
-        val updated = session.copy(matchCount = newCount, isRewarded = won)
-        val answer = if (won) {
-            MiniGameAnswer(true, "Card added to inventory.", session.targetCard)
-        } else {
-            MiniGameAnswer(true, "Correct match!")
-        }
-        return updated to answer
+        return TriviaQuestion(
+            id = "${target.id}_$idSuffix",
+            prompt = prompt,
+            options = (distractors + correctAnswer).shuffled(random),
+            correctAnswer = correctAnswer
+        )
     }
 }

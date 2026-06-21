@@ -30,6 +30,7 @@ import com.wilddeck.app.ui.screens.DeckBuilderScreen
 import com.wilddeck.app.ui.screens.FrameCustomizationScreen
 import com.wilddeck.app.ui.screens.HomeScreen
 import com.wilddeck.app.ui.screens.MiniGameScreen
+import com.wilddeck.app.ui.screens.CombatScreen
 import com.wilddeck.app.ui.theme.WildDeckTheme
 
 class MainActivity : ComponentActivity() {
@@ -49,6 +50,7 @@ private object Routes {
     const val COLLECTION = "collection"
     const val DECKS = "decks"
     const val GAME = "game"
+    const val COMBAT = "combat"
     const val DETAIL = "detail/{cardId}"
     const val FRAMES = "frames?cardId={cardId}"
 
@@ -96,7 +98,9 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                 HomeScreen(
                     ownedCount = state.ownedCards.size,
                     deckCount = state.decks.size,
+                    progressionPoints = state.progressionPoints,
                     onPlay = { navController.navigate(Routes.GAME) },
+                    onCombat = { navController.navigate(Routes.COMBAT) },
                     onCollection = { navController.navigate(Routes.COLLECTION) },
                     onDecks = { navController.navigate(Routes.DECKS) },
                     onFrames = { navController.navigate(Routes.frames()) },
@@ -137,6 +141,24 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onStart = viewModel::startMiniGame,
                     onAnswer = viewModel::answerTrivia,
                     onCollection = { navController.navigate(Routes.COLLECTION) }
+                )
+            }
+            composable(Routes.COMBAT) {
+                CombatScreen(
+                    session = state.combatSession,
+                    points = state.progressionPoints,
+                    decks = state.decks,
+                    ownedCards = state.ownedCards,
+                    lockedCards = state.catalog.filterNot { card -> state.ownedCards.any { it.id == card.id } },
+                    lockedFrames = state.frames.filterNot { it.id in state.unlockedFrameIds },
+                    creatureCost = viewModel::creatureUnlockCost,
+                    frameCost = viewModel::frameUnlockCost,
+                    onStart = viewModel::startCombat,
+                    onAction = viewModel::performCombatAction,
+                    onNextRound = viewModel::nextCombatRound,
+                    onEndRun = viewModel::endCombatRun,
+                    onUnlockCreature = viewModel::unlockCreature,
+                    onUnlockFrame = viewModel::unlockFrame
                 )
             }
             composable(
@@ -182,6 +204,7 @@ private fun screenTitle(route: String?): String = when (route) {
     Routes.COLLECTION -> "Collection"
     Routes.DECKS -> "Deck Builder"
     Routes.GAME -> "Mini Game"
+    Routes.COMBAT -> "Wild Run"
     Routes.DETAIL -> "Card Details"
     Routes.FRAMES -> "Frame Workshop"
     else -> "WildDeck"

@@ -37,7 +37,9 @@ import com.wilddeck.app.ui.components.AnimalCardView
 fun HomeScreen(
     ownedCount: Int,
     deckCount: Int,
+    progressionPoints: Int,
     onPlay: () -> Unit,
+    onCombat: () -> Unit,
     onCollection: () -> Unit,
     onDecks: () -> Unit,
     onFrames: () -> Unit,
@@ -55,8 +57,10 @@ fun HomeScreen(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatSummary("$ownedCount", "cards")
             StatSummary("$deckCount/5", "decks")
+            StatSummary("$progressionPoints", "points")
         }
         Spacer(Modifier.height(6.dp))
+        HomeButton("Play Wild Run", "Battle rounds and earn unlock points", onCombat)
         HomeButton("Play Mini Game", "Match an animal with its food", onPlay)
         HomeButton("View Collection", "Browse every card you have earned", onCollection)
         HomeButton("Build Decks", "Create and score five-card teams", onDecks)

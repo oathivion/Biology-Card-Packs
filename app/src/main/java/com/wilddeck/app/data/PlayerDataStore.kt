@@ -37,7 +37,13 @@ class PlayerDataStore(context: Context) {
                     )
                 }
             }
-            PersistedPlayerData(ownedIds, decks, selectedFrames, unlockedIds)
+            PersistedPlayerData(
+                ownedCardIds = ownedIds,
+                decks = decks,
+                selectedFrames = selectedFrames,
+                unlockedFrameIds = unlockedIds,
+                progressionPoints = root.optInt("progressionPoints", 0)
+            )
         }.getOrDefault(PersistedPlayerData())
     }
 
@@ -46,6 +52,7 @@ class PlayerDataStore(context: Context) {
             put("ownedCardIds", JSONArray(data.ownedCardIds.toList()))
             put("unlockedFrameIds", JSONArray(data.unlockedFrameIds.toList()))
             put("selectedFrames", JSONObject(data.selectedFrames))
+            put("progressionPoints", data.progressionPoints)
             put("decks", JSONArray().apply {
                 data.decks.forEach { deck ->
                     put(JSONObject().apply {

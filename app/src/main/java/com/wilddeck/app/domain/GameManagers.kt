@@ -117,6 +117,11 @@ class FrameManager(
     fun selectedFrames(): Map<String, String> = selectedByCardId.toMap()
     fun selectedFrameId(cardId: String): String = selectedByCardId[cardId] ?: "black"
     fun isUnlocked(frameId: String): Boolean = frameId in unlockedIds
+    fun unlock(frameId: String): RuleResult {
+        if (frameId !in frames) return RuleResult.Error("Frame asset is missing.")
+        unlockedIds += frameId
+        return RuleResult.Success
+    }
 
     fun applyFrame(cardId: String, frameId: String, inventory: PlayerInventory): RuleResult {
         if (!inventory.owns(cardId)) return RuleResult.Error("You do not own this card yet.")

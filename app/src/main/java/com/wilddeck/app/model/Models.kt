@@ -13,8 +13,27 @@ data class AnimalCard(
     val rarity: CardRarity,
     val healthExplanation: String,
     val dangerExplanation: String,
+    val ability: AnimalAbility = AnimalAbility("field_notes", "Field Notes", AbilityType.STRIKE,
+        "Uses its natural adaptations in combat."),
     val defaultFrameId: String = "black",
     val currentFrameId: String = defaultFrameId
+) {
+    val combatRole: CombatRole
+        get() = if (health + danger < 5) CombatRole.SUPPORT else CombatRole.ATTACKER
+}
+
+enum class CombatRole { ATTACKER, SUPPORT }
+
+enum class AbilityType {
+    STRIKE, TAUNT, HEAL, SHIELD, PACK, AMBUSH, STUN, DODGE, POISON, EMPOWER
+}
+
+data class AnimalAbility(
+    val id: String,
+    val name: String,
+    val type: AbilityType,
+    val description: String,
+    val power: Int = 1
 )
 
 enum class CardRarity { COMMON, UNCOMMON, RARE, LEGENDARY }
@@ -83,7 +102,8 @@ data class PersistedPlayerData(
     val ownedCardIds: Set<String> = emptySet(),
     val decks: List<Deck> = emptyList(),
     val selectedFrames: Map<String, String> = emptyMap(),
-    val unlockedFrameIds: Set<String> = setOf("black", "forest", "ocean")
+    val unlockedFrameIds: Set<String> = setOf("black", "forest", "ocean"),
+    val progressionPoints: Int = 0
 )
 
 sealed interface RuleResult {
@@ -95,4 +115,38 @@ data class MiniGameAnswer(
     val isCorrect: Boolean,
     val message: String,
     val cardAwarded: AnimalCard? = null
+)
+
+data class CombatUnit(
+    val instanceId: String,
+    val card: AnimalCard,
+    val maxHealth: Int,
+    val currentHealth: Int,
+    val damage: Int,
+    val multiplier: Double,
+    val hasActed: Boolean = false,
+    val shield: Int = 0,
+    val isTaunting: Boolean = false,
+    val isStunned: Boolean = false
+) {
+    val isAlive: Boolean get() = currentHealth > 0
+}
+
+data class CombatSession(
+    val round: Int,
+    val playerUnits: List<CombatUnit>,
+    val enemyUnits: List<CombatUnit>,
+    val playerMultiplier: Double,
+    val enemyMultiplier: Double,
+    val pointsEarnedThisRun: Int = 0,
+    val battleLog: List<String> = emptyList(),
+    val isDefeated: Boolean = false
+) {
+    val isRoundCleared: Boolean get() = enemyUnits.none { it.isAlive }
+}
+
+data class CombatActionResult(
+    val session: CombatSession,
+    val message: String,
+    val roundPointAwarded: Boolean = false
 )

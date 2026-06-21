@@ -51,6 +51,10 @@ fun CardDetailScreen(
         DetailBlock("Food", card.food)
         DetailBlock("Why health is ${card.health}", card.healthExplanation)
         DetailBlock("Why danger is ${card.danger}", card.dangerExplanation)
+        DetailBlock(
+            "Wild Run role",
+            "${card.combatRole.name.lowercase().replaceFirstChar(Char::uppercase)} — ${card.ability.name}\n${card.ability.description}"
+        )
         DetailBlock("Rarity", card.rarity.name.lowercase().replaceFirstChar(Char::uppercase))
         DetailBlock(
             "Known symbiotic partners",

@@ -18,7 +18,8 @@ class PlayerDataStoreTest {
             ownedCardIds = setOf("lion", "rabbit"),
             decks = listOf(Deck("test-deck", "Test Deck", listOf("lion"), 17, 1.0)),
             selectedFrames = mapOf("lion" to "forest"),
-            unlockedFrameIds = setOf("black", "forest")
+            unlockedFrameIds = setOf("black", "forest"),
+            progressionPoints = 7
         )
 
         store.save(expected)

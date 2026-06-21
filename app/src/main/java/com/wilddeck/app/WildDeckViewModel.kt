@@ -8,12 +8,15 @@ import androidx.lifecycle.AndroidViewModel
 import com.wilddeck.app.data.PlayerDataStore
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.domain.DeckManager
+import com.wilddeck.app.domain.CombatManager
 import com.wilddeck.app.domain.FrameManager
 import com.wilddeck.app.domain.MiniGameManager
 import com.wilddeck.app.domain.PlayerInventory
 import com.wilddeck.app.domain.SymbiosisManager
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
+import com.wilddeck.app.model.CardRarity
+import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.PersistedPlayerData
@@ -30,6 +33,8 @@ data class WildDeckUiState(
     val selectedFrames: Map<String, String> = emptyMap(),
     val miniGameSession: MiniGameSession? = null,
     val miniGameFeedback: String? = null,
+    val combatSession: CombatSession? = null,
+    val progressionPoints: Int = 0,
     val message: String? = null
 )
 
@@ -46,7 +51,9 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         loaded.selectedFrames
     )
     private val miniGameManager = MiniGameManager(SampleData.animalCards)
+    private val combatManager = CombatManager(SampleData.animalCards)
     private var previousMiniGameCardId: String? = null
+    private var progressionPoints = loaded.progressionPoints
 
     var uiState by mutableStateOf(WildDeckUiState())
         private set
@@ -84,6 +91,78 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         val (updated, answer) = miniGameManager.answer(session, answerText)
         answer.cardAwarded?.let { inventory.addCard(it.id) }
         publish(session = updated, gameFeedback = answer.message)
+    }
+
+    fun startCombat(deckId: String?) {
+        val selectedDeckCards = deckManager.allDecks()
+            .firstOrNull { it.id == deckId && it.cardIds.isNotEmpty() }
+            ?.cardIds
+            ?.mapNotNull(catalog::get)
+            .orEmpty()
+        val cards = selectedDeckCards.ifEmpty { inventory.getAll(catalog).take(5) }
+        if (cards.isEmpty()) {
+            showMessage("Earn or unlock a creature before starting combat.")
+            return
+        }
+        val multiplier = symbiosisManager.score(cards.map { it.id }, catalog).multiplier
+        val combat = combatManager.startRun(cards, multiplier)
+        publish(combat = combat, message = "Combat started with a x${formatMultiplier(multiplier)} stat multiplier.")
+    }
+
+    fun performCombatAction(actorId: String, targetId: String) {
+        val current = uiState.combatSession ?: return
+        val result = combatManager.act(current, actorId, targetId)
+        if (result.roundPointAwarded) progressionPoints += 1
+        publish(combat = result.session, message = result.message)
+    }
+
+    fun nextCombatRound() {
+        val current = uiState.combatSession ?: return
+        if (!current.isRoundCleared) return
+        publish(combat = combatManager.nextRound(current), message = "Round ${current.round + 1} begins.")
+    }
+
+    fun endCombatRun() {
+        publish(combat = null, message = "Run ended. Progression points are saved.")
+    }
+
+    fun unlockCreature(cardId: String) {
+        val card = catalog[cardId] ?: return showMessage("Card data is missing.")
+        if (inventory.owns(cardId)) return showMessage("You already own this creature.")
+        val cost = creatureUnlockCost(card.rarity)
+        if (progressionPoints < cost) return showMessage("You need $cost points to unlock ${card.name}.")
+        progressionPoints -= cost
+        inventory.addCard(cardId)
+        publish(message = "${card.name} unlocked for $cost points.")
+    }
+
+    fun unlockFrame(frameId: String) {
+        val frame = SampleData.frames.firstOrNull { it.id == frameId }
+            ?: return showMessage("Frame asset is missing.")
+        if (frameManager.isUnlocked(frameId)) return showMessage("This frame is already unlocked.")
+        val cost = frameUnlockCost(frameId)
+        if (progressionPoints < cost) return showMessage("You need $cost points to unlock ${frame.name}.")
+        when (val result = frameManager.unlock(frameId)) {
+            RuleResult.Success -> {
+                progressionPoints -= cost
+                publish(message = "${frame.name} unlocked for $cost points.")
+            }
+            is RuleResult.Error -> showMessage(result.message)
+        }
+    }
+
+    fun creatureUnlockCost(rarity: CardRarity): Int = when (rarity) {
+        CardRarity.COMMON -> 1
+        CardRarity.UNCOMMON -> 2
+        CardRarity.RARE -> 3
+        CardRarity.LEGENDARY -> 4
+    }
+
+    fun frameUnlockCost(frameId: String): Int = when (frameId) {
+        "desert" -> 2
+        "arctic" -> 3
+        "gold" -> 5
+        else -> 1
     }
 
     fun createDeck(name: String) {
@@ -134,13 +213,15 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     private fun publish(
         session: MiniGameSession? = uiState.miniGameSession,
         gameFeedback: String? = uiState.miniGameFeedback,
+        combat: CombatSession? = uiState.combatSession,
         message: String? = uiState.message
     ) {
         val persisted = PersistedPlayerData(
             ownedCardIds = inventory.allIds(),
             decks = deckManager.allDecks(),
             selectedFrames = frameManager.selectedFrames(),
-            unlockedFrameIds = frameManager.unlockedIds()
+            unlockedFrameIds = frameManager.unlockedIds(),
+            progressionPoints = progressionPoints
         )
         dataStore.save(persisted)
         uiState = WildDeckUiState(
@@ -152,10 +233,15 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             selectedFrames = frameManager.selectedFrames(),
             miniGameSession = session?.copy(targetCard = session.targetCard.withSelectedFrame()),
             miniGameFeedback = gameFeedback,
+            combatSession = combat,
+            progressionPoints = progressionPoints,
             message = message
         )
     }
 
     private fun AnimalCard.withSelectedFrame(): AnimalCard =
         copy(currentFrameId = frameManager.selectedFrameId(id))
+
+    private fun formatMultiplier(value: Double): String =
+        if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
 }

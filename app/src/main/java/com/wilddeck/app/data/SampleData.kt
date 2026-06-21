@@ -1,12 +1,45 @@
 package com.wilddeck.app.data
 
 import com.wilddeck.app.model.AnimalCard
+import com.wilddeck.app.model.AnimalAbility
+import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.CardRarity
 import com.wilddeck.app.model.RelationshipType
 import com.wilddeck.app.model.SymbiosisRelationship
 
 object SampleData {
+    private val abilities = mapOf(
+        "lion" to AnimalAbility("pride_guard", "Pride Guard", AbilityType.TAUNT,
+            "Lions defend their pride: becomes the enemy's preferred target and gains a shield.", 2),
+        "elephant" to AnimalAbility("thick_hide", "Thick Hide", AbilityType.SHIELD,
+            "Its thick hide absorbs extra damage after it attacks.", 3),
+        "crocodile" to AnimalAbility("ambush", "River Ambush", AbilityType.AMBUSH,
+            "An ambush strike deals bonus damage to an uninjured target.", 3),
+        "wolf" to AnimalAbility("pack_hunt", "Pack Hunt", AbilityType.PACK,
+            "Pack coordination adds damage for every other living ally.", 1),
+        "rabbit" to AnimalAbility("burrow", "Sheltering Burrow", AbilityType.SHIELD,
+            "Digs cover around an ally, granting a protective shield.", 3),
+        "eagle" to AnimalAbility("diving_strike", "Diving Strike", AbilityType.STRIKE,
+            "Exceptional eyesight guides a precise, high-damage strike.", 2),
+        "shark" to AnimalAbility("feeding_frenzy", "Feeding Frenzy", AbilityType.STRIKE,
+            "Deals bonus damage to an already injured target.", 2),
+        "clownfish" to AnimalAbility("anemone_shelter", "Anemone Shelter", AbilityType.HEAL,
+            "Protective mucus and shelter restore an ally's health.", 3),
+        "anemone" to AnimalAbility("stinging_tentacles", "Stinging Tentacles", AbilityType.STUN,
+            "Stinging cells briefly stun the target after dealing damage.", 1),
+        "rhino" to AnimalAbility("charge", "Savanna Charge", AbilityType.TAUNT,
+            "A massive charge deals bonus damage and draws enemy attention.", 2),
+        "oxpecker" to AnimalAbility("tick_cleaner", "Tick Cleaner", AbilityType.HEAL,
+            "Removes parasites and restores a large ally's health.", 3),
+        "pistol_shrimp" to AnimalAbility("cavitation_snap", "Cavitation Snap", AbilityType.STUN,
+            "Its shock wave damages and stuns an enemy.", 1),
+        "goby" to AnimalAbility("watchman", "Watchman's Warning", AbilityType.DODGE,
+            "Warns an ally of danger, granting a shield and drawing no attacks.", 2),
+        "remora" to AnimalAbility("parasite_cleanup", "Parasite Cleanup", AbilityType.EMPOWER,
+            "Cleans an ally and raises both its damage and remaining health.", 2)
+    )
+
     val animalCards = listOf(
         AnimalCard("lion", "Lion", "Big cat", 8, 9, "🦁",
             "Lions are social big cats that live in prides. Females usually coordinate hunts while males help defend territory.",
@@ -78,7 +111,7 @@ object SampleData {
             "Food scraps", "Warm open ocean and reefs", CardRarity.UNCOMMON,
             "A flexible body and moderate size provide limited durability.",
             "Remoras are not aggressive and present little danger to people.")
-    )
+    ).map { card -> card.copy(ability = abilities.getValue(card.id)) }
 
     val frames = listOf(
         CardFrame("black", "Black Border", "Classic", 0xFF171717, true),

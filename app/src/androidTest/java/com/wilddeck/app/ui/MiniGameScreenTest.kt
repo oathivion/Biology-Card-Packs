@@ -34,6 +34,8 @@ class MiniGameScreenTest {
                     session = MiniGameSession(card, listOf(question)),
                     frame = frame,
                     feedback = null,
+                    points = 1,
+                    entryCost = 1,
                     onStart = {},
                     onAnswer = { selected = it },
                     onCollection = {}
@@ -66,6 +68,8 @@ class MiniGameScreenTest {
                     ),
                     frame = SampleData.frames.first(),
                     feedback = "Card added to inventory.",
+                    points = 1,
+                    entryCost = 1,
                     onStart = {},
                     onAnswer = {},
                     onCollection = {}
@@ -91,6 +95,8 @@ class MiniGameScreenTest {
                     session = MiniGameSession(card, listOf(question)),
                     frame = SampleData.frames.first(),
                     feedback = "Correct! Next question.",
+                    points = 1,
+                    entryCost = 1,
                     onStart = {},
                     onAnswer = {},
                     onCollection = {}

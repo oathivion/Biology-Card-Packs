@@ -15,7 +15,6 @@ import com.wilddeck.app.domain.PlayerInventory
 import com.wilddeck.app.domain.SymbiosisManager
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
-import com.wilddeck.app.model.CardRarity
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.MiniGameSession
@@ -69,18 +68,18 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         symbiosisManager.score(cardIds, catalog).activeRelationships
 
     fun startMiniGame() {
+        if (progressionPoints < MINI_GAME_COST) {
+            showMessage("You need $MINI_GAME_COST point to enter Animal Trivia. Earn points in Wild Run.")
+            return
+        }
         val excludedIds = inventory.allIds() + listOfNotNull(previousMiniGameCardId)
-        val session = miniGameManager.startSession(excludedIds)
-        session?.let { previousMiniGameCardId = it.targetCard.id }
-        uiState = uiState.copy(
-            miniGameSession = session,
-            miniGameFeedback = null,
-            message = if (session == null) {
-                "No new animal is available. You may already own every card."
-            } else {
-                null
-            }
-        )
+        val session = miniGameManager.startSession(excludedIds) ?: run {
+            showMessage("No new animal is available. You may already own every card.")
+            return
+        }
+        previousMiniGameCardId = session.targetCard.id
+        progressionPoints -= MINI_GAME_COST
+        publish(session = session, gameFeedback = null, message = null)
     }
 
     fun answerTrivia(answerText: String) {
@@ -126,16 +125,6 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         publish(combat = null, message = "Run ended. Progression points are saved.")
     }
 
-    fun unlockCreature(cardId: String) {
-        val card = catalog[cardId] ?: return showMessage("Card data is missing.")
-        if (inventory.owns(cardId)) return showMessage("You already own this creature.")
-        val cost = creatureUnlockCost(card.rarity)
-        if (progressionPoints < cost) return showMessage("You need $cost points to unlock ${card.name}.")
-        progressionPoints -= cost
-        inventory.addCard(cardId)
-        publish(message = "${card.name} unlocked for $cost points.")
-    }
-
     fun unlockFrame(frameId: String) {
         val frame = SampleData.frames.firstOrNull { it.id == frameId }
             ?: return showMessage("Frame asset is missing.")
@@ -149,13 +138,6 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             }
             is RuleResult.Error -> showMessage(result.message)
         }
-    }
-
-    fun creatureUnlockCost(rarity: CardRarity): Int = when (rarity) {
-        CardRarity.COMMON -> 1
-        CardRarity.UNCOMMON -> 2
-        CardRarity.RARE -> 3
-        CardRarity.LEGENDARY -> 4
     }
 
     fun frameUnlockCost(frameId: String): Int = when (frameId) {
@@ -244,4 +226,8 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
 
     private fun formatMultiplier(value: Double): String =
         if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
+
+    companion object {
+        const val MINI_GAME_COST = 1
+    }
 }

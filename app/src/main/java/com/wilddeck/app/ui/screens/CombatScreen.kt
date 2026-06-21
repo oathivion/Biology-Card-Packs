@@ -1,19 +1,14 @@
 package com.wilddeck.app.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -44,10 +39,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.zIndex
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
-import com.wilddeck.app.model.CardRarity
 import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
@@ -59,22 +55,16 @@ fun CombatScreen(
     points: Int,
     decks: List<Deck>,
     ownedCards: List<AnimalCard>,
-    lockedCards: List<AnimalCard>,
     lockedFrames: List<CardFrame>,
-    creatureCost: (CardRarity) -> Int,
     frameCost: (String) -> Int,
     onStart: (String?) -> Unit,
     onAction: (String, String) -> Unit,
     onNextRound: () -> Unit,
     onEndRun: () -> Unit,
-    onUnlockCreature: (String) -> Unit,
     onUnlockFrame: (String) -> Unit
 ) {
     if (session == null) {
-        CombatLobby(
-            points, decks, ownedCards, lockedCards, lockedFrames,
-            creatureCost, frameCost, onStart, onUnlockCreature, onUnlockFrame
-        )
+        CombatLobby(points, decks, ownedCards, lockedFrames, frameCost, onStart, onUnlockFrame)
     } else {
         CombatBoard(session, points, onAction, onNextRound, onEndRun)
     }
@@ -85,12 +75,9 @@ private fun CombatLobby(
     points: Int,
     decks: List<Deck>,
     ownedCards: List<AnimalCard>,
-    lockedCards: List<AnimalCard>,
     lockedFrames: List<CardFrame>,
-    creatureCost: (CardRarity) -> Int,
     frameCost: (String) -> Int,
     onStart: (String?) -> Unit,
-    onUnlockCreature: (String) -> Unit,
     onUnlockFrame: (String) -> Unit
 ) {
     Column(
@@ -99,12 +86,9 @@ private fun CombatLobby(
     ) {
         Text("Wild Run", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
         Text("Drag attackers onto enemies and supports onto allies. Clear a round to earn 1 point.")
-        Surface(
-            color = MaterialTheme.colorScheme.primaryContainer,
-            shape = RoundedCornerShape(14.dp)
-        ) {
+        Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp)) {
             Text(
-                "$points unlock points",
+                "$points points",
                 Modifier.fillMaxWidth().padding(16.dp),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -112,8 +96,7 @@ private fun CombatLobby(
             )
         }
         Text("Choose a team", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        val usableDecks = decks.filter { it.cardIds.isNotEmpty() }
-        usableDecks.forEach { deck ->
+        decks.filter { it.cardIds.isNotEmpty() }.forEach { deck ->
             Button(onClick = { onStart(deck.id) }, modifier = Modifier.fillMaxWidth()) {
                 Text("${deck.name} · ${deck.cardIds.size} cards · ×${formatCombatMultiplier(deck.symbiosisMultiplier)}")
             }
@@ -126,26 +109,12 @@ private fun CombatLobby(
             Text("Use first ${minOf(5, ownedCards.size)} collected creatures")
         }
         if (ownedCards.isEmpty()) {
-            Text("Earn a creature through trivia or unlock one below to begin.")
+            Text("Earn your first creature through Animal Trivia to begin.")
         }
 
-        Text("Unlock creatures", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        lockedCards.forEach { card ->
-            UnlockRow(
-                icon = card.imageEmoji,
-                title = card.name,
-                detail = "${card.combatRole.name.lowercase().replaceFirstChar(Char::uppercase)} · ${card.ability.name}",
-                cost = creatureCost(card.rarity),
-                points = points,
-                onUnlock = { onUnlockCreature(card.id) }
-            )
-        }
-        if (lockedCards.isEmpty()) Text("Every creature has been unlocked.")
-
-        Text("Unlock frames", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text("Buy frames", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         lockedFrames.forEach { frame ->
             UnlockRow(
-                icon = "◇",
                 title = frame.name,
                 detail = frame.borderStyle,
                 cost = frameCost(frame.id),
@@ -159,7 +128,6 @@ private fun CombatLobby(
 
 @Composable
 private fun UnlockRow(
-    icon: String,
     title: String,
     detail: String,
     cost: Int,
@@ -172,7 +140,7 @@ private fun UnlockRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(icon, fontSize = 30.sp)
+            Text("◇", fontSize = 30.sp)
             Column(Modifier.weight(1f)) {
                 Text(title, fontWeight = FontWeight.Bold)
                 Text(detail, style = MaterialTheme.typography.bodySmall)
@@ -191,29 +159,46 @@ private fun CombatBoard(
     onEndRun: () -> Unit
 ) {
     val targetBounds = remember { mutableStateMapOf<String, Rect>() }
+    var inspectedUnit by remember { mutableStateOf<CombatUnit?>(null) }
+
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        Modifier.fillMaxSize().padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
-                Text("Round ${session.round}", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-                Text("Player ×${formatCombatMultiplier(session.playerMultiplier)} · Enemy ×${formatCombatMultiplier(session.enemyMultiplier)}")
+                Text("Round ${session.round}", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                Text(
+                    "You ×${formatCombatMultiplier(session.playerMultiplier)} · " +
+                        "Enemy ×${formatCombatMultiplier(session.enemyMultiplier)}",
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
             Text("$points pts", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
 
-        Text("Enemies", fontWeight = FontWeight.Bold)
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            session.enemyUnits.filter { it.isAlive }.forEach { unit ->
-                CombatTile(
-                    unit = unit,
-                    enemy = true,
-                    modifier = Modifier.onGloballyPositioned { targetBounds[unit.instanceId] = it.boundsInRoot() }
-                )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Enemies · long-press for details", fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.fillMaxWidth().weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)
+            ) {
+                session.enemyUnits.filter { it.isAlive }.forEach { unit ->
+                    CombatTile(
+                        unit = unit,
+                        enemy = true,
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .onGloballyPositioned { targetBounds[unit.instanceId] = it.boundsInRoot() }
+                            .pointerInput(unit.instanceId) {
+                                detectTapGestures(onLongPress = { inspectedUnit = unit })
+                            }
+                    )
+                }
+            }
+            session.battleLog.lastOrNull()?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2)
             }
         }
 
@@ -226,37 +211,41 @@ private fun CombatBoard(
                 when {
                     session.isDefeated -> "Your team was defeated."
                     session.isRoundCleared -> "Round cleared. One point earned."
-                    else -> "Drag a glowing player card to a valid target."
+                    else -> "Drag an available card to its target."
                 },
-                Modifier.padding(12.dp),
+                Modifier.padding(7.dp),
                 textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.bodySmall
             )
         }
 
-        Text("Your team", fontWeight = FontWeight.Bold)
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            session.playerUnits.filter { it.isAlive }.forEach { unit ->
-                DraggableCombatTile(
-                    unit = unit,
-                    allTargetBounds = targetBounds,
-                    validTargetIds = if (unit.card.combatRole == CombatRole.SUPPORT) {
-                        session.playerUnits.filter { it.isAlive }.map { it.instanceId }.toSet()
-                    } else {
-                        session.enemyUnits.filter { it.isAlive }.map { it.instanceId }.toSet()
-                    },
-                    enabled = !unit.hasActed && !session.isDefeated && !session.isRoundCleared,
-                    onDrop = { targetId -> onAction(unit.instanceId, targetId) },
-                    modifier = Modifier.onGloballyPositioned { targetBounds[unit.instanceId] = it.boundsInRoot() }
-                )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text("Your team · long-press for details", fontWeight = FontWeight.Bold)
+            Row(
+                Modifier.fillMaxWidth().weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                session.playerUnits.filter { it.isAlive }.forEach { unit ->
+                    DraggableCombatTile(
+                        unit = unit,
+                        allTargetBounds = targetBounds,
+                        validTargetIds = if (unit.card.combatRole == CombatRole.SUPPORT) {
+                            session.playerUnits.filter { it.isAlive }.map { it.instanceId }.toSet()
+                        } else {
+                            session.enemyUnits.filter { it.isAlive }.map { it.instanceId }.toSet()
+                        },
+                        enabled = !unit.hasActed && !session.isDefeated && !session.isRoundCleared,
+                        onDrop = { targetId -> onAction(unit.instanceId, targetId) },
+                        onInspect = { inspectedUnit = unit },
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxSize()
+                            .onGloballyPositioned { targetBounds[unit.instanceId] = it.boundsInRoot() }
+                    )
+                }
             }
         }
-
-        Text("Battle log", fontWeight = FontWeight.Bold)
-        session.battleLog.takeLast(5).forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
 
         when {
             session.isRoundCleared -> Button(onClick = onNextRound, modifier = Modifier.fillMaxWidth()) {
@@ -267,7 +256,10 @@ private fun CombatBoard(
             }
         }
         TextButton(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("End Run") }
-        Spacer(Modifier.height(12.dp))
+    }
+
+    inspectedUnit?.let { unit ->
+        CombatCardDialog(unit = unit, onDismiss = { inspectedUnit = null })
     }
 }
 
@@ -278,6 +270,7 @@ private fun DraggableCombatTile(
     validTargetIds: Set<String>,
     enabled: Boolean,
     onDrop: (String) -> Unit,
+    onInspect: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var dragOffset by remember(unit.instanceId) { mutableStateOf(Offset.Zero) }
@@ -294,6 +287,9 @@ private fun DraggableCombatTile(
                 translationX = dragOffset.x
                 translationY = dragOffset.y
                 alpha = if (unit.hasActed) 0.55f else 1f
+            }
+            .pointerInput(unit.instanceId) {
+                detectTapGestures(onLongPress = { onInspect() })
             }
             .pointerInput(unit.instanceId, enabled, validTargetIds) {
                 if (enabled) {
@@ -322,27 +318,89 @@ private fun DraggableCombatTile(
 private fun CombatTile(unit: CombatUnit, enemy: Boolean, modifier: Modifier = Modifier) {
     val roleColor = if (unit.card.combatRole == CombatRole.SUPPORT) Color(0xFF287B72) else Color(0xFF9B3D32)
     Card(
-        modifier = modifier
-            .size(width = 150.dp, height = 190.dp)
-            .border(3.dp, if (enemy) MaterialTheme.colorScheme.error else roleColor, RoundedCornerShape(12.dp))
+        modifier = modifier.border(
+            2.dp,
+            if (enemy) MaterialTheme.colorScheme.error else roleColor,
+            RoundedCornerShape(10.dp)
+        )
     ) {
         Column(
-            Modifier.fillMaxSize().padding(10.dp),
+            Modifier.fillMaxSize().padding(4.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            Text(unit.card.imageEmoji, fontSize = 42.sp)
-            Text(unit.card.name, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2)
-            Text("HP ${unit.currentHealth}/${unit.maxHealth}  DMG ${unit.damage}", fontWeight = FontWeight.Bold)
-            if (unit.shield > 0) Text("Shield ${unit.shield}", color = MaterialTheme.colorScheme.primary)
+            Text(unit.card.imageEmoji, fontSize = 27.sp)
+            Text(
+                unit.card.name,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                style = MaterialTheme.typography.labelMedium
+            )
+            Text(
+                "♥${unit.currentHealth}/${unit.maxHealth} ⚔${unit.damage}",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall,
+                maxLines = 1
+            )
+            if (unit.shield > 0) {
+                Text("Shield ${unit.shield}", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelSmall)
+            }
             Text(
                 unit.card.combatRole.name,
                 color = roleColor,
-                style = MaterialTheme.typography.labelMedium,
+                style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold
             )
-            Text(unit.card.ability.name, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
-            Text(unit.card.ability.description, style = MaterialTheme.typography.bodySmall, maxLines = 3)
+            Text(unit.card.ability.name, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, maxLines = 2)
+        }
+    }
+}
+
+@Composable
+private fun CombatCardDialog(unit: CombatUnit, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Card(Modifier.fillMaxSize().padding(14.dp), shape = RoundedCornerShape(22.dp)) {
+            Column(
+                Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text("DANGER ${unit.card.danger}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.error)
+                    Text("HEALTH ${unit.card.health}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+                }
+                Text(unit.card.imageEmoji, fontSize = 108.sp)
+                Text(unit.card.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+                Text(
+                    "${unit.card.combatRole.name.lowercase().replaceFirstChar(Char::uppercase)} · " +
+                        "Combat HP ${unit.currentHealth}/${unit.maxHealth} · Damage ${unit.damage}",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+                InspectionBlock("Animal", unit.card.description)
+                InspectionBlock("Ability: ${unit.card.ability.name}", unit.card.ability.description)
+                InspectionBlock("Habitat", unit.card.habitat)
+                InspectionBlock("Diet", unit.card.food)
+                Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Return to battle") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InspectionBlock(title: String, description: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(description)
         }
     }
 }

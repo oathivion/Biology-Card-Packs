@@ -138,6 +138,8 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     session = session,
                     frame = session?.targetCard?.currentFrameId?.let(framesById::get),
                     feedback = state.miniGameFeedback,
+                    points = state.progressionPoints,
+                    entryCost = WildDeckViewModel.MINI_GAME_COST,
                     onStart = viewModel::startMiniGame,
                     onAnswer = viewModel::answerTrivia,
                     onCollection = { navController.navigate(Routes.COLLECTION) }
@@ -149,15 +151,12 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     points = state.progressionPoints,
                     decks = state.decks,
                     ownedCards = state.ownedCards,
-                    lockedCards = state.catalog.filterNot { card -> state.ownedCards.any { it.id == card.id } },
                     lockedFrames = state.frames.filterNot { it.id in state.unlockedFrameIds },
-                    creatureCost = viewModel::creatureUnlockCost,
                     frameCost = viewModel::frameUnlockCost,
                     onStart = viewModel::startCombat,
                     onAction = viewModel::performCombatAction,
                     onNextRound = viewModel::nextCombatRound,
                     onEndRun = viewModel::endCombatRun,
-                    onUnlockCreature = viewModel::unlockCreature,
                     onUnlockFrame = viewModel::unlockFrame
                 )
             }

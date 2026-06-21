@@ -90,6 +90,8 @@ fun MiniGameScreen(
     session: MiniGameSession?,
     frame: CardFrame?,
     feedback: String?,
+    points: Int,
+    entryCost: Int,
     onStart: () -> Unit,
     onAnswer: (String) -> Unit,
     onCollection: () -> Unit
@@ -102,8 +104,20 @@ fun MiniGameScreen(
         ) {
             Text("Animal Trivia", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
             Text("Answer animal questions. Reach three progress points to earn a new card.")
+            Text(
+                "Entry: $entryCost point · You have $points",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
             Spacer(Modifier.height(20.dp))
-            Button(onClick = onStart, modifier = Modifier.testTag("start_game")) { Text("Start") }
+            Button(
+                onClick = onStart,
+                enabled = points >= entryCost,
+                modifier = Modifier.testTag("start_game")
+            ) { Text("Spend $entryCost point and start") }
+            if (points < entryCost) {
+                Text("Clear a Wild Run round to earn an entry point.")
+            }
         }
         return
     }
@@ -131,7 +145,11 @@ fun MiniGameScreen(
                 modifier = Modifier.testTag("reward_message")
             )
             Button(onClick = onCollection, modifier = Modifier.fillMaxWidth()) { Text("View Collection") }
-            OutlinedButton(onClick = onStart, modifier = Modifier.fillMaxWidth()) { Text("Play Again") }
+            OutlinedButton(
+                onClick = onStart,
+                enabled = points >= entryCost,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Play Again ($entryCost point)") }
         } else {
             feedback?.let {
                 Surface(

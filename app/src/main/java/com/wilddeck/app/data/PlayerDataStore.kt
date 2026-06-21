@@ -42,7 +42,7 @@ class PlayerDataStore(context: Context) {
                 decks = decks,
                 selectedFrames = selectedFrames,
                 unlockedFrameIds = unlockedIds,
-                progressionPoints = root.optInt("progressionPoints", 0)
+                progressionPoints = root.optInt("progressionPoints", 1)
             )
         }.getOrDefault(PersistedPlayerData())
     }

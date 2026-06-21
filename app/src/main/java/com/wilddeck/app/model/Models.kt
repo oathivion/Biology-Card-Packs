@@ -103,7 +103,7 @@ data class PersistedPlayerData(
     val decks: List<Deck> = emptyList(),
     val selectedFrames: Map<String, String> = emptyMap(),
     val unlockedFrameIds: Set<String> = setOf("black", "forest", "ocean"),
-    val progressionPoints: Int = 0
+    val progressionPoints: Int = 1
 )
 
 sealed interface RuleResult {

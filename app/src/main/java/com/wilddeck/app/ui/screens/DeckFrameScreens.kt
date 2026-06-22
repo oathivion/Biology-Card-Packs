@@ -309,3 +309,62 @@ fun FrameCustomizationScreen(
 
 private fun formatMultiplier(value: Double): String =
     if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
+
+@Composable
+fun FrameStoreScreen(
+    frames: List<CardFrame>,
+    unlockedFrameIds: Set<String>,
+    points: Int,
+    frameCost: (String) -> Int,
+    onBuy: (String) -> Unit,
+    onCustomize: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text("Frame Store", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            Text("$points points available · Frames are cosmetic only.")
+        }
+        items(frames, key = { it.id }) { frame ->
+            val unlocked = frame.id in unlockedFrameIds
+            Card(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Box(
+                        Modifier.size(54.dp)
+                            .background(Color(frame.colorArgb), RoundedCornerShape(12.dp))
+                            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                    )
+                    Column(Modifier.weight(1f)) {
+                        Text(frame.name, fontWeight = FontWeight.Bold)
+                        Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
+                            else "Effect: ${frame.effect.name.lowercase().replace('_', ' ')}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    if (unlocked) {
+                        Text("Owned", fontWeight = FontWeight.Bold)
+                    } else {
+                        Button(onClick = { onBuy(frame.id) }, enabled = points >= frameCost(frame.id)) {
+                            Text("${frameCost(frame.id)} pts")
+                        }
+                    }
+                }
+            }
+        }
+        item {
+            Button(onClick = onCustomize, modifier = Modifier.fillMaxWidth()) {
+                Text("Equip Owned Frames")
+            }
+        }
+    }
+}

@@ -55,7 +55,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -239,7 +238,7 @@ private fun CombatBoard(
         if (soundEnabled) {
             tone.startTone(toneFor(effects), if (reducedMotion) 80 else 180)
         }
-        delay(if (reducedMotion) 250 else 900)
+        delay(if (reducedMotion) 120 else 420)
         activeEffects = emptyList()
     }
 
@@ -310,7 +309,7 @@ private fun CombatBoard(
                             allTargetBounds = targetBounds,
                             validTargetIds = validIds,
                             enabled = unit.isAlive && !unit.hasActed && !session.isDefeated && !session.isRoundCleared &&
-                                activeEffects.isEmpty(),
+                                effects.none { it.type == CombatEffectType.ROUND_CLEAR },
                             reducedMotion = reducedMotion,
                             onDrop = { targetId -> onAction(unit.instanceId, targetId) },
                             onInspect = { inspectedUnit = unit },
@@ -547,7 +546,7 @@ private fun EffectVisual(effect: CombatEffect?, animalId: String, reducedMotion:
     if (effect == null) return
     var visible by remember(effect) { mutableStateOf(true) }
     LaunchedEffect(effect) {
-        delay(if (reducedMotion) 180 else 750)
+        delay(if (reducedMotion) 100 else 380)
         visible = false
     }
     AnimatedVisibility(
@@ -637,7 +636,7 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
     var tilt by remember { mutableStateOf(Offset.Zero) }
     val scale by animateFloatAsState(1f, tween(if (reducedMotion) 1 else 280), label = "inspect")
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)).blur(if (reducedMotion) 0.dp else 3.dp)) {
+        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.58f))) {
             Card(
                 Modifier.fillMaxSize().padding(14.dp)
                     .graphicsLayer {

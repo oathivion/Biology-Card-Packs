@@ -1,5 +1,6 @@
 package com.wilddeck.app.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -19,15 +22,21 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.RoundedCornerShape
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
@@ -36,6 +45,7 @@ import com.wilddeck.app.ui.components.AnimalCardView
 @Composable
 fun HomeScreen(
     ownedCount: Int,
+    lockedCount: Int,
     deckCount: Int,
     progressionPoints: Int,
     onPlay: () -> Unit,
@@ -43,37 +53,139 @@ fun HomeScreen(
     onCollection: () -> Unit,
     onDecks: () -> Unit,
     onFrames: () -> Unit,
-    onDetails: () -> Unit
+    onDetails: () -> Unit,
+    onLockedDetails: () -> Unit
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Text("WILDDECK", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
-        Text(
-            "Collect real animals. Learn how they live. Build a tiny, biologically brilliant deck.",
-            style = MaterialTheme.typography.titleMedium
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatSummary("$ownedCount", "cards")
-            StatSummary("$deckCount/5", "decks")
-            StatSummary("$progressionPoints", "points")
+    val pagerState = rememberPagerState(initialPage = 2, pageCount = { 5 })
+    Column(Modifier.fillMaxSize()) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f),
+            beyondViewportPageCount = 1
+        ) { page ->
+            when (page) {
+                0 -> HubPage("Frame Store", "Buy and equip cosmetic animated frames.", "Open Frame Store", onFrames, "SECOND LEFT")
+                1 -> HubPage("Decks", "$deckCount of 5 decks created.", "Build Decks", onDecks, "FIRST LEFT")
+                2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
+                3 -> CollectionHub(ownedCount, lockedCount, onCollection, onDetails, onLockedDetails)
+                else -> PlaceholderHub()
+            }
         }
-        Spacer(Modifier.height(6.dp))
-        HomeButton("Play Wild Run", "Battle rounds and earn unlock points", onCombat)
-        HomeButton("Play Mini Game", "Match an animal with its food", onPlay)
-        HomeButton("View Collection", "Browse every card you have earned", onCollection)
-        HomeButton("Build Decks", "Create and score five-card teams", onDecks)
-        HomeButton("Customize Frames", "Change a card's cosmetic border", onFrames)
-        OutlinedButton(onClick = onDetails, modifier = Modifier.fillMaxWidth()) {
-            Text("View Card Details")
+        Row(
+            Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            repeat(5) { index ->
+                Box(
+                    Modifier.padding(4.dp).size(if (pagerState.currentPage == index) 10.dp else 7.dp)
+                        .background(
+                            if (pagerState.currentPage == index) MaterialTheme.colorScheme.primary
+                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.35f),
+                            RoundedCornerShape(50)
+                        )
+                )
+            }
         }
     }
 }
 
 @Composable
-private fun StatSummary(value: String, label: String) {
-    Card {
+private fun PlayLanding(
+    ownedCount: Int,
+    deckCount: Int,
+    progressionPoints: Int,
+    onPlay: () -> Unit,
+    onCombat: () -> Unit
+) {
+    Column(
+        Modifier.fillMaxSize().padding(24.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text("WILDDECK", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
+        Text("Choose your next expedition.", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(18.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatSummary("$ownedCount", "cards", Modifier.weight(1f))
+            StatSummary("$deckCount/5", "decks", Modifier.weight(1f))
+            StatSummary("$progressionPoints", "points", Modifier.weight(1f))
+        }
+        Spacer(Modifier.height(22.dp))
+        HomeButton("ANIMAL TRIVIA", "Spend a point, answer questions, earn a new creature", onPlay)
+        Spacer(Modifier.height(12.dp))
+        HomeButton("WILD RUN", "Battle with your deck and earn progression points", onCombat)
+        Spacer(Modifier.height(20.dp))
+        Text("Swipe left or right for decks, cards, frames, and more.", textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun HubPage(title: String, description: String, action: String, onClick: () -> Unit, eyebrow: String) {
+    Column(
+        Modifier.fillMaxSize().padding(28.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(eyebrow, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text(title, style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
+        Text(description, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) { Text(action) }
+    }
+}
+
+@Composable
+private fun CollectionHub(
+    ownedCount: Int,
+    lockedCount: Int,
+    onCollection: () -> Unit,
+    onDetails: () -> Unit,
+    onLockedDetails: () -> Unit
+) {
+    Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
+        Text("FIELD GUIDE", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text("Cards & Collection", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        Spacer(Modifier.height(20.dp))
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Unlocked · $ownedCount", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("Browse your collection, inspect cards, and add them to decks.")
+                Spacer(Modifier.height(10.dp))
+                Button(onClick = onCollection, modifier = Modifier.fillMaxWidth()) { Text("Open Collection") }
+                OutlinedButton(onClick = onDetails, modifier = Modifier.fillMaxWidth()) { Text("Card Information") }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Card(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Locked · $lockedCount", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text("Preview undiscovered creatures and learn what remains.")
+                Spacer(Modifier.height(10.dp))
+                OutlinedButton(onClick = onLockedDetails, enabled = lockedCount > 0, modifier = Modifier.fillMaxWidth()) {
+                    Text("View Locked Card")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlaceholderHub() {
+    Column(
+        Modifier.fillMaxSize().padding(28.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("SECOND RIGHT", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+        Text("Coming Soon", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
+        Text("This space is reserved for the next major feature.", textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun StatSummary(value: String, label: String, modifier: Modifier = Modifier) {
+    Card(modifier) {
         Column(Modifier.padding(horizontal = 22.dp, vertical = 12.dp)) {
             Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
             Text(label, style = MaterialTheme.typography.labelMedium)

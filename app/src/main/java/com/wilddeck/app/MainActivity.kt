@@ -34,6 +34,7 @@ import com.wilddeck.app.ui.screens.CardDetailScreen
 import com.wilddeck.app.ui.screens.CollectionScreen
 import com.wilddeck.app.ui.screens.DeckBuilderScreen
 import com.wilddeck.app.ui.screens.FrameCustomizationScreen
+import com.wilddeck.app.ui.screens.FrameStoreScreen
 import com.wilddeck.app.ui.screens.HomeScreen
 import com.wilddeck.app.ui.screens.MiniGameScreen
 import com.wilddeck.app.ui.screens.CombatScreen
@@ -59,6 +60,7 @@ private object Routes {
     const val COMBAT = "combat"
     const val DETAIL = "detail/{cardId}"
     const val FRAMES = "frames?cardId={cardId}"
+    const val FRAME_STORE = "frame_store"
 
     fun detail(cardId: String) = "detail/$cardId"
     fun frames(cardId: String? = null) = "frames?cardId=${cardId.orEmpty()}"
@@ -115,16 +117,23 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
             composable(Routes.HOME) {
                 HomeScreen(
                     ownedCount = state.ownedCards.size,
+                    lockedCount = state.catalog.size - state.ownedCards.size,
                     deckCount = state.decks.size,
                     progressionPoints = state.progressionPoints,
                     onPlay = { navController.navigate(Routes.GAME) },
                     onCombat = { navController.navigate(Routes.COMBAT) },
                     onCollection = { navController.navigate(Routes.COLLECTION) },
                     onDecks = { navController.navigate(Routes.DECKS) },
-                    onFrames = { navController.navigate(Routes.frames()) },
+                    onFrames = { navController.navigate(Routes.FRAME_STORE) },
                     onDetails = {
-                        state.catalog.firstOrNull()?.let { navController.navigate(Routes.detail(it.id)) }
+                        (state.ownedCards.firstOrNull() ?: state.catalog.firstOrNull())
+                            ?.let { navController.navigate(Routes.detail(it.id)) }
                             ?: viewModel.showMessage("Card data is missing.")
+                    },
+                    onLockedDetails = {
+                        state.catalog.firstOrNull { candidate -> state.ownedCards.none { it.id == candidate.id } }
+                            ?.let { navController.navigate(Routes.detail(it.id)) }
+                            ?: viewModel.showMessage("Every creature is unlocked.")
                     }
                 )
             }
@@ -186,6 +195,16 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onHaptics = viewModel::setHapticsEnabled
                 )
             }
+            composable(Routes.FRAME_STORE) {
+                FrameStoreScreen(
+                    frames = state.frames,
+                    unlockedFrameIds = state.unlockedFrameIds,
+                    points = state.progressionPoints,
+                    frameCost = viewModel::frameUnlockCost,
+                    onBuy = viewModel::unlockFrame,
+                    onCustomize = { navController.navigate(Routes.frames()) }
+                )
+            }
             composable(
                 route = Routes.DETAIL,
                 arguments = listOf(navArgument("cardId") { type = NavType.StringType })
@@ -232,5 +251,6 @@ private fun screenTitle(route: String?): String = when (route) {
     Routes.COMBAT -> "Wild Run"
     Routes.DETAIL -> "Card Details"
     Routes.FRAMES -> "Frame Workshop"
+    Routes.FRAME_STORE -> "Frame Store"
     else -> "WildDeck"
 }

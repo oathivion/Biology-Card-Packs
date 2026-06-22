@@ -44,8 +44,23 @@ data class CardFrame(
     val borderStyle: String,
     val colorArgb: Long,
     val isUnlockedByDefault: Boolean,
-    val rarityRequirement: CardRarity? = null
+    val rarityRequirement: CardRarity? = null,
+    val effect: FrameEffect = FrameEffect.NONE
 )
+
+enum class FrameEffect {
+    NONE,
+    LIGHT_SWEEP,
+    SPARKLE,
+    AURORA,
+    EMBERS,
+    BUBBLES,
+    LEAVES,
+    FROST,
+    LIGHTNING,
+    RAIN,
+    STARFIELD
+}
 
 enum class RelationshipType(val multiplier: Double) {
     MUTUALISM(1.5),

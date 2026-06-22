@@ -5,6 +5,7 @@ import com.wilddeck.app.model.AnimalAbility
 import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.CardRarity
+import com.wilddeck.app.model.FrameEffect
 import com.wilddeck.app.model.RelationshipType
 import com.wilddeck.app.model.SymbiosisRelationship
 
@@ -119,7 +120,27 @@ object SampleData {
         CardFrame("ocean", "Ocean Frame", "Wave-carved", 0xFF176B87, true),
         CardFrame("desert", "Desert Frame", "Sandstone", 0xFFC47A32, false),
         CardFrame("arctic", "Arctic Frame", "Frosted", 0xFF87BFD1, false),
-        CardFrame("gold", "Legendary Gold", "Ornate", 0xFFD5A928, false, CardRarity.LEGENDARY)
+        CardFrame("gold", "Legendary Gold", "Ornate", 0xFFD5A928, false, CardRarity.LEGENDARY),
+        CardFrame("radiant", "Radiant Pulse", "A white beam travels down the card", 0xFFE8E3D4, false,
+            effect = FrameEffect.LIGHT_SWEEP),
+        CardFrame("starlight", "Starlight Frame", "Tiny lights sparkle around the card", 0xFF6657A8, false,
+            effect = FrameEffect.SPARKLE),
+        CardFrame("aurora", "Aurora Frame", "A flowing northern-light gradient", 0xFF3D8B83, false,
+            effect = FrameEffect.AURORA),
+        CardFrame("ember", "Ember Frame", "Warm embers rise from the border", 0xFFB6452C, false,
+            effect = FrameEffect.EMBERS),
+        CardFrame("bubble", "Bubble Frame", "Air bubbles drift upward", 0xFF247DA0, false,
+            effect = FrameEffect.BUBBLES),
+        CardFrame("canopy", "Canopy Frame", "Leaves drift gently across the card", 0xFF397B3D, false,
+            effect = FrameEffect.LEAVES),
+        CardFrame("glacier", "Glacier Frame", "Frost crystals shimmer at the edges", 0xFF9ED7E5, false,
+            effect = FrameEffect.FROST),
+        CardFrame("storm", "Storm Frame", "Electric arcs flicker around the border", 0xFF5C63A8, false,
+            effect = FrameEffect.LIGHTNING),
+        CardFrame("monsoon", "Monsoon Frame", "Fine rain sweeps diagonally", 0xFF3D6680, false,
+            effect = FrameEffect.RAIN),
+        CardFrame("cosmic", "Cosmic Frame", "A deep starfield slowly twinkles", 0xFF392D63, false,
+            effect = FrameEffect.STARFIELD)
     )
 
     val relationships = listOf(

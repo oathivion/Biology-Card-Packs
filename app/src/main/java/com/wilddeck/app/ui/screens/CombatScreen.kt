@@ -530,6 +530,14 @@ private fun CombatTile(
                     textAlign = TextAlign.Center, maxLines = 2)
             }
             EffectVisual(effect, unit.card.id, reducedMotion)
+            if (impact) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Red.copy(alpha = if (reducedMotion) 0.18f else 0.34f))
+                        .testTag("damage_flash_${unit.instanceId}")
+                )
+            }
         }
     }
 }
@@ -559,8 +567,12 @@ private fun EffectVisual(effect: CombatEffect?, animalId: String, reducedMotion:
                     fontWeight = FontWeight.Black)
                 CombatEffectType.STUN -> Text("✦ ✦", color = Color(0xFFFFD34E), fontSize = 24.sp)
                 CombatEffectType.TAUNT -> Text("!", color = Color(0xFFFF8A45), fontSize = 42.sp, fontWeight = FontWeight.Black)
-                CombatEffectType.ATTACK -> Text(animalEffectGlyph(animalId, effect.abilityType), fontSize = 40.sp)
-                CombatEffectType.DEFEAT -> Text("✕", color = Color.White, fontSize = 50.sp, fontWeight = FontWeight.Black)
+                CombatEffectType.ATTACK -> Text(
+                    animalEffectGlyph(animalId, effect.abilityType),
+                    color = Color(0xFFFFB24A),
+                    fontSize = 40.sp
+                )
+                CombatEffectType.DEFEAT -> Text("✕", color = Color(0xFFD63B35), fontSize = 50.sp, fontWeight = FontWeight.Black)
                 else -> Unit
             }
         }
@@ -697,7 +709,7 @@ private fun effectColor(effect: CombatEffect?): Color = when (effect?.type) {
     CombatEffectType.HEAL -> Color(0xFF39C86A)
     CombatEffectType.SHIELD -> Color(0xFF55C7FF)
     CombatEffectType.EMPOWER -> Color(0xFFFFC83D)
-    else -> Color.White
+    else -> Color.Transparent
 }
 
 private fun animalEffectGlyph(animalId: String, type: AbilityType?): String = when (animalId) {

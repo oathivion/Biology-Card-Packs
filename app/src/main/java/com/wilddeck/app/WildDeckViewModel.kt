@@ -178,6 +178,10 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         "desert" -> 2
         "arctic" -> 3
         "gold" -> 5
+        "radiant", "bubble", "canopy" -> 2
+        "starlight", "ember", "glacier", "monsoon" -> 3
+        "aurora", "storm" -> 4
+        "cosmic" -> 5
         else -> 1
     }
 

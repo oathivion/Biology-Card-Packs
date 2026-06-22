@@ -2,7 +2,13 @@ package com.wilddeck.app.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,11 +24,17 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -33,6 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
+import com.wilddeck.app.model.FrameEffect
+import kotlin.math.sin
+import kotlin.math.absoluteValue
 
 @Composable
 fun AnimalCardView(
@@ -54,12 +69,17 @@ fun AnimalCardView(
         tonalElevation = 3.dp,
         shadowElevation = 4.dp
     ) {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
+                .clip(RoundedCornerShape(18.dp))
                 .background(MaterialTheme.colorScheme.surface)
-                .padding(if (compact) 10.dp else 16.dp)
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (compact) 10.dp else 16.dp)
+            ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -120,6 +140,136 @@ fun AnimalCardView(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            }
+            AnimatedFrameEffect(frame.effect, frameColor, Modifier.fillMaxSize())
+        }
+    }
+}
+
+@Composable
+private fun AnimatedFrameEffect(effect: FrameEffect, frameColor: Color, modifier: Modifier = Modifier) {
+    if (effect == FrameEffect.NONE) return
+    val transition = rememberInfiniteTransition(label = "frame-${effect.name}")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = when (effect) {
+                    FrameEffect.LIGHTNING -> 900
+                    FrameEffect.SPARKLE, FrameEffect.FROST -> 1800
+                    else -> 3200
+                }
+            ),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "frame-progress"
+    )
+    Canvas(modifier) {
+        when (effect) {
+            FrameEffect.LIGHT_SWEEP -> {
+                val y = size.height * progress
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        listOf(Color.Transparent, Color.White.copy(alpha = 0.58f), Color.Transparent),
+                        startY = y - 55f,
+                        endY = y + 55f
+                    ),
+                    topLeft = androidx.compose.ui.geometry.Offset.Zero,
+                    size = size
+                )
+                drawLine(Color.White.copy(alpha = 0.78f), Offset(0f, y), Offset(size.width, y), 2.5f)
+            }
+            FrameEffect.SPARKLE -> repeat(12) { index ->
+                val phase = (progress + index / 12f) % 1f
+                val x = size.width * ((index * 37 % 97) / 97f)
+                val y = size.height * ((index * 61 % 101) / 101f)
+                val radius = 1.5f + 5f * sin(phase * Math.PI).toFloat().coerceAtLeast(0f)
+                drawCircle(Color.White.copy(alpha = 0.25f + phase * 0.55f), radius, Offset(x, y))
+            }
+            FrameEffect.AURORA -> {
+                val x = size.width * progress
+                drawRect(
+                    Brush.horizontalGradient(
+                        listOf(
+                            Color.Transparent,
+                            Color(0xFF72F1B8).copy(alpha = 0.22f),
+                            Color(0xFFB98CFF).copy(alpha = 0.27f),
+                            Color.Transparent
+                        ),
+                        startX = x - size.width,
+                        endX = x + size.width
+                    )
+                )
+            }
+            FrameEffect.EMBERS -> repeat(14) { index ->
+                val phase = (progress + index / 14f) % 1f
+                val x = size.width * ((index * 29 % 89) / 89f)
+                val y = size.height * (1f - phase)
+                drawCircle(Color(0xFFFF7A32).copy(alpha = 1f - phase), 2f + index % 3, Offset(x, y))
+            }
+            FrameEffect.BUBBLES -> repeat(10) { index ->
+                val phase = (progress + index / 10f) % 1f
+                val x = size.width * ((index * 43 % 91) / 91f)
+                val y = size.height * (1f - phase)
+                drawCircle(
+                    Color.White.copy(alpha = 0.35f),
+                    4f + index % 4 * 2f,
+                    Offset(x, y),
+                    style = Stroke(1.7f)
+                )
+            }
+            FrameEffect.LEAVES -> repeat(8) { index ->
+                val phase = (progress + index / 8f) % 1f
+                val x = size.width * ((index * 31 % 83) / 83f) + sin(phase * 6.28f) * 15f
+                val y = size.height * phase
+                drawOval(
+                    Color(0xFF85C66A).copy(alpha = 0.55f),
+                    topLeft = Offset(x, y),
+                    size = androidx.compose.ui.geometry.Size(8f, 14f)
+                )
+            }
+            FrameEffect.FROST -> {
+                repeat(18) { index ->
+                    val x = if (index % 2 == 0) 4f else size.width - 4f
+                    val y = size.height * ((index * 17 % 97) / 97f)
+                    val pulse = 0.25f + 0.55f * sin((progress + index / 18f) * 6.28f).absoluteValue
+                    drawCircle(Color.White.copy(alpha = pulse), 2f + index % 3, Offset(x, y))
+                }
+                drawRoundRect(Color.White.copy(alpha = 0.2f), style = Stroke(4f), cornerRadius = CornerRadius(18f))
+            }
+            FrameEffect.LIGHTNING -> {
+                val alpha = if (progress < 0.15f || progress in 0.48f..0.58f) 0.85f else 0.12f
+                val path = Path().apply {
+                    moveTo(size.width * 0.12f, 0f)
+                    lineTo(size.width * 0.28f, size.height * 0.24f)
+                    lineTo(size.width * 0.18f, size.height * 0.43f)
+                    lineTo(size.width * 0.38f, size.height * 0.7f)
+                    lineTo(size.width * 0.3f, size.height)
+                }
+                drawPath(path, Color(0xFFAEC8FF).copy(alpha = alpha), style = Stroke(3f, cap = StrokeCap.Round))
+            }
+            FrameEffect.RAIN -> repeat(18) { index ->
+                val phase = (progress + index / 18f) % 1f
+                val x = size.width * ((index * 23 % 97) / 97f)
+                val y = size.height * phase
+                drawLine(
+                    Color(0xFFBDE8FF).copy(alpha = 0.35f),
+                    Offset(x, y),
+                    Offset(x - 10f, y + 24f),
+                    1.5f
+                )
+            }
+            FrameEffect.STARFIELD -> {
+                drawRect(Color(0xFF130D2E).copy(alpha = 0.16f))
+                repeat(20) { index ->
+                    val x = size.width * ((index * 47 % 101) / 101f)
+                    val y = size.height * ((index * 67 % 103) / 103f)
+                    val twinkle = 0.2f + 0.8f * sin((progress + index / 20f) * 6.28f).absoluteValue
+                    drawCircle(Color.White.copy(alpha = twinkle), 1.2f + index % 3, Offset(x, y))
+                }
+            }
+            FrameEffect.NONE -> Unit
         }
     }
 }

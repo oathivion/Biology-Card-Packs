@@ -278,6 +278,13 @@ fun FrameCustomizationScreen(
                 Column(Modifier.weight(1f)) {
                     Text(frame.name, fontWeight = FontWeight.Bold)
                     Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
+                    if (frame.effect != com.wilddeck.app.model.FrameEffect.NONE) {
+                        Text(
+                            "Animated: ${frame.effect.name.lowercase().replace('_', ' ')}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
                 }
                 Text(if (unlocked) "Available" else "Locked")
             }

@@ -16,6 +16,7 @@ import com.wilddeck.app.domain.SymbiosisManager
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.CombatSession
+import com.wilddeck.app.model.CombatEffect
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.PersistedPlayerData
@@ -33,7 +34,12 @@ data class WildDeckUiState(
     val miniGameSession: MiniGameSession? = null,
     val miniGameFeedback: String? = null,
     val combatSession: CombatSession? = null,
+    val combatEffects: List<CombatEffect> = emptyList(),
+    val combatEffectSequence: Long = 0,
     val progressionPoints: Int = 0,
+    val reducedMotion: Boolean = false,
+    val soundEnabled: Boolean = true,
+    val hapticsEnabled: Boolean = true,
     val message: String? = null
 )
 
@@ -53,6 +59,10 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     private val combatManager = CombatManager(SampleData.animalCards)
     private var previousMiniGameCardId: String? = null
     private var progressionPoints = loaded.progressionPoints
+    private var reducedMotion = loaded.reducedMotion
+    private var soundEnabled = loaded.soundEnabled
+    private var hapticsEnabled = loaded.hapticsEnabled
+    private var combatEffectSequence = 0L
 
     var uiState by mutableStateOf(WildDeckUiState())
         private set
@@ -112,17 +122,41 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         val current = uiState.combatSession ?: return
         val result = combatManager.act(current, actorId, targetId)
         if (result.roundPointAwarded) progressionPoints += 1
-        publish(combat = result.session, message = result.message)
+        combatEffectSequence += 1
+        publish(combat = result.session, effects = result.effects, message = result.message)
     }
 
     fun nextCombatRound() {
         val current = uiState.combatSession ?: return
         if (!current.isRoundCleared) return
-        publish(combat = combatManager.nextRound(current), message = "Round ${current.round + 1} begins.")
+        combatEffectSequence += 1
+        publish(
+            combat = combatManager.nextRound(current),
+            effects = listOf(com.wilddeck.app.model.CombatEffect(
+                com.wilddeck.app.model.CombatEffectType.ROUND_START,
+                label = "Round ${current.round + 1}"
+            )),
+            message = "Round ${current.round + 1} begins."
+        )
     }
 
     fun endCombatRun() {
-        publish(combat = null, message = "Run ended. Progression points are saved.")
+        publish(combat = null, effects = emptyList(), message = "Run ended. Progression points are saved.")
+    }
+
+    fun setReducedMotion(enabled: Boolean) {
+        reducedMotion = enabled
+        publish(message = if (enabled) "Reduced motion enabled." else "Full motion enabled.")
+    }
+
+    fun setSoundEnabled(enabled: Boolean) {
+        soundEnabled = enabled
+        publish()
+    }
+
+    fun setHapticsEnabled(enabled: Boolean) {
+        hapticsEnabled = enabled
+        publish()
     }
 
     fun unlockFrame(frameId: String) {
@@ -196,6 +230,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         session: MiniGameSession? = uiState.miniGameSession,
         gameFeedback: String? = uiState.miniGameFeedback,
         combat: CombatSession? = uiState.combatSession,
+        effects: List<CombatEffect> = uiState.combatEffects,
         message: String? = uiState.message
     ) {
         val persisted = PersistedPlayerData(
@@ -203,7 +238,10 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             decks = deckManager.allDecks(),
             selectedFrames = frameManager.selectedFrames(),
             unlockedFrameIds = frameManager.unlockedIds(),
-            progressionPoints = progressionPoints
+            progressionPoints = progressionPoints,
+            reducedMotion = reducedMotion,
+            soundEnabled = soundEnabled,
+            hapticsEnabled = hapticsEnabled
         )
         dataStore.save(persisted)
         uiState = WildDeckUiState(
@@ -216,7 +254,12 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             miniGameSession = session?.copy(targetCard = session.targetCard.withSelectedFrame()),
             miniGameFeedback = gameFeedback,
             combatSession = combat,
+            combatEffects = effects,
+            combatEffectSequence = combatEffectSequence,
             progressionPoints = progressionPoints,
+            reducedMotion = reducedMotion,
+            soundEnabled = soundEnabled,
+            hapticsEnabled = hapticsEnabled,
             message = message
         )
     }

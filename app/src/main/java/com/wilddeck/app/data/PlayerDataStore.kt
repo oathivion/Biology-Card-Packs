@@ -42,7 +42,10 @@ class PlayerDataStore(context: Context) {
                 decks = decks,
                 selectedFrames = selectedFrames,
                 unlockedFrameIds = unlockedIds,
-                progressionPoints = root.optInt("progressionPoints", 1)
+                progressionPoints = root.optInt("progressionPoints", 1),
+                reducedMotion = root.optBoolean("reducedMotion", false),
+                soundEnabled = root.optBoolean("soundEnabled", true),
+                hapticsEnabled = root.optBoolean("hapticsEnabled", true)
             )
         }.getOrDefault(PersistedPlayerData())
     }
@@ -53,6 +56,9 @@ class PlayerDataStore(context: Context) {
             put("unlockedFrameIds", JSONArray(data.unlockedFrameIds.toList()))
             put("selectedFrames", JSONObject(data.selectedFrames))
             put("progressionPoints", data.progressionPoints)
+            put("reducedMotion", data.reducedMotion)
+            put("soundEnabled", data.soundEnabled)
+            put("hapticsEnabled", data.hapticsEnabled)
             put("decks", JSONArray().apply {
                 data.decks.forEach { deck ->
                     put(JSONObject().apply {

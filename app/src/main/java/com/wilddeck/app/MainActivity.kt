@@ -5,6 +5,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -92,7 +98,19 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
         NavHost(
             navController = navController,
             startDestination = Routes.HOME,
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier.padding(innerPadding),
+            enterTransition = {
+                if (state.reducedMotion) EnterTransition.None else fadeIn() + slideInHorizontally { it / 5 }
+            },
+            exitTransition = {
+                if (state.reducedMotion) ExitTransition.None else fadeOut() + slideOutHorizontally { -it / 5 }
+            },
+            popEnterTransition = {
+                if (state.reducedMotion) EnterTransition.None else fadeIn() + slideInHorizontally { -it / 5 }
+            },
+            popExitTransition = {
+                if (state.reducedMotion) ExitTransition.None else fadeOut() + slideOutHorizontally { it / 5 }
+            }
         ) {
             composable(Routes.HOME) {
                 HomeScreen(
@@ -148,16 +166,24 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
             composable(Routes.COMBAT) {
                 CombatScreen(
                     session = state.combatSession,
+                    effects = state.combatEffects,
+                    effectSequence = state.combatEffectSequence,
                     points = state.progressionPoints,
                     decks = state.decks,
                     ownedCards = state.ownedCards,
                     lockedFrames = state.frames.filterNot { it.id in state.unlockedFrameIds },
+                    reducedMotion = state.reducedMotion,
+                    soundEnabled = state.soundEnabled,
+                    hapticsEnabled = state.hapticsEnabled,
                     frameCost = viewModel::frameUnlockCost,
                     onStart = viewModel::startCombat,
                     onAction = viewModel::performCombatAction,
                     onNextRound = viewModel::nextCombatRound,
                     onEndRun = viewModel::endCombatRun,
-                    onUnlockFrame = viewModel::unlockFrame
+                    onUnlockFrame = viewModel::unlockFrame,
+                    onReducedMotion = viewModel::setReducedMotion,
+                    onSound = viewModel::setSoundEnabled,
+                    onHaptics = viewModel::setHapticsEnabled
                 )
             }
             composable(

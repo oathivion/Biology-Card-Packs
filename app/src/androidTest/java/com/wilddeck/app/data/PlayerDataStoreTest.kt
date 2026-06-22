@@ -19,7 +19,10 @@ class PlayerDataStoreTest {
             decks = listOf(Deck("test-deck", "Test Deck", listOf("lion"), 17, 1.0)),
             selectedFrames = mapOf("lion" to "forest"),
             unlockedFrameIds = setOf("black", "forest"),
-            progressionPoints = 7
+            progressionPoints = 7,
+            reducedMotion = true,
+            soundEnabled = false,
+            hapticsEnabled = false
         )
 
         store.save(expected)

@@ -2,6 +2,7 @@ package com.wilddeck.app.domain
 
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.model.CombatRole
+import com.wilddeck.app.model.CombatEffectType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -73,5 +74,21 @@ class CombatManagerTest {
         assertEquals(1, result.session.pointsEarnedThisRun)
         assertFalse(repeated.roundPointAwarded)
         assertEquals(1, repeated.session.pointsEarnedThisRun)
+    }
+
+    @Test
+    fun combatActionsEmitTypedAnimationEvents() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }
+        val manager = CombatManager(SampleData.animalCards, Random(8))
+        val session = requireNotNull(manager.startRun(listOf(lion), 1.0))
+
+        val result = manager.act(
+            session,
+            session.playerUnits.single().instanceId,
+            session.enemyUnits.single().instanceId
+        )
+
+        assertTrue(result.effects.any { it.type == CombatEffectType.ATTACK })
+        assertTrue(result.effects.any { it.type == CombatEffectType.DAMAGE })
     }
 }

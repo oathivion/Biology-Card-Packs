@@ -103,7 +103,10 @@ data class PersistedPlayerData(
     val decks: List<Deck> = emptyList(),
     val selectedFrames: Map<String, String> = emptyMap(),
     val unlockedFrameIds: Set<String> = setOf("black", "forest", "ocean"),
-    val progressionPoints: Int = 1
+    val progressionPoints: Int = 1,
+    val reducedMotion: Boolean = false,
+    val soundEnabled: Boolean = true,
+    val hapticsEnabled: Boolean = true
 )
 
 sealed interface RuleResult {
@@ -148,5 +151,19 @@ data class CombatSession(
 data class CombatActionResult(
     val session: CombatSession,
     val message: String,
-    val roundPointAwarded: Boolean = false
+    val roundPointAwarded: Boolean = false,
+    val effects: List<CombatEffect> = emptyList()
+)
+
+enum class CombatEffectType {
+    ATTACK, DAMAGE, HEAL, SHIELD, EMPOWER, TAUNT, STUN, DEFEAT, ROUND_START, ROUND_CLEAR, POINT
+}
+
+data class CombatEffect(
+    val type: CombatEffectType,
+    val sourceId: String? = null,
+    val targetId: String? = null,
+    val amount: Int = 0,
+    val abilityType: AbilityType? = null,
+    val label: String = ""
 )

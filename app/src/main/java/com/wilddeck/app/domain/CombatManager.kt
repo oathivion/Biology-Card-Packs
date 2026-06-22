@@ -3,6 +3,8 @@ package com.wilddeck.app.domain
 import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CombatActionResult
+import com.wilddeck.app.model.CombatEffect
+import com.wilddeck.app.model.CombatEffectType
 import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
@@ -49,18 +51,25 @@ class CombatManager(
             }
         )
 
-        var updated = action.first.copy(
-            battleLog = (session.battleLog + action.second).takeLast(8)
+        var updated = action.session.copy(
+            battleLog = (session.battleLog + action.message).takeLast(8)
         )
         if (updated.enemyUnits.none { it.isAlive }) {
             updated = updated.copy(pointsEarnedThisRun = updated.pointsEarnedThisRun + 1)
-            return CombatActionResult(updated, "Round cleared! You earned 1 point.", true)
+            return CombatActionResult(
+                updated,
+                "Round cleared! You earned 1 point.",
+                true,
+                action.effects + CombatEffect(CombatEffectType.ROUND_CLEAR, label = "Round cleared") +
+                    CombatEffect(CombatEffectType.POINT, amount = 1, label = "+1 point")
+            )
         }
 
         if (updated.playerUnits.filter { it.isAlive }.all { it.hasActed }) {
             updated = runEnemyTurn(updated)
         }
-        return CombatActionResult(updated, action.second)
+        val enemyEffects = buildEnemyEffects(action.session, updated)
+        return CombatActionResult(updated, action.message, effects = action.effects + enemyEffects)
     }
 
     fun nextRound(session: CombatSession): CombatSession {
@@ -88,7 +97,7 @@ class CombatManager(
         session: CombatSession,
         actor: CombatUnit,
         targetId: String
-    ): Pair<CombatSession, String>? {
+    ): ActionOutcome? {
         val target = session.enemyUnits.firstOrNull { it.instanceId == targetId && it.isAlive } ?: return null
         var damage = actor.damage
         var shieldGain = 0
@@ -119,17 +128,30 @@ class CombatManager(
             shield = actor.shield + shieldGain,
             isTaunting = taunts
         )
-        return session.copy(
+        val updated = session.copy(
             playerUnits = session.playerUnits.replace(actor.instanceId, acted),
             enemyUnits = session.enemyUnits.replace(target.instanceId, damagedTarget)
-        ) to "${actor.card.name} used ${actor.card.ability.name} on ${target.card.name} for $damage damage."
+        )
+        val effects = buildList {
+            add(CombatEffect(CombatEffectType.ATTACK, actor.instanceId, target.instanceId, abilityType = actor.card.ability.type))
+            add(CombatEffect(CombatEffectType.DAMAGE, actor.instanceId, target.instanceId, damage, actor.card.ability.type, "-$damage"))
+            if (shieldGain > 0) add(CombatEffect(CombatEffectType.SHIELD, actor.instanceId, actor.instanceId, shieldGain, label = "+$shieldGain shield"))
+            if (taunts) add(CombatEffect(CombatEffectType.TAUNT, actor.instanceId, actor.instanceId, label = "Taunt"))
+            if (stuns && damagedTarget.isAlive) add(CombatEffect(CombatEffectType.STUN, actor.instanceId, target.instanceId, label = "Stunned"))
+            if (!damagedTarget.isAlive) add(CombatEffect(CombatEffectType.DEFEAT, actor.instanceId, target.instanceId, label = "Defeated"))
+        }
+        return ActionOutcome(
+            updated,
+            "${actor.card.name} used ${actor.card.ability.name} on ${target.card.name} for $damage damage.",
+            effects
+        )
     }
 
     private fun supportAction(
         session: CombatSession,
         actor: CombatUnit,
         targetId: String
-    ): Pair<CombatSession, String>? {
+    ): ActionOutcome? {
         val target = session.playerUnits.firstOrNull { it.instanceId == targetId && it.isAlive } ?: return null
         val power = actor.card.ability.power
         val supported = when (actor.card.ability.type) {
@@ -145,11 +167,24 @@ class CombatManager(
             else -> target.copy(currentHealth = (target.currentHealth + power).coerceAtMost(target.maxHealth))
         }
         val acted = actor.copy(hasActed = true)
-        return session.copy(
+        val updated = session.copy(
             playerUnits = session.playerUnits
                 .replace(target.instanceId, supported)
                 .replace(actor.instanceId, if (actor.instanceId == target.instanceId) supported.copy(hasActed = true) else acted)
-        ) to "${actor.card.name} used ${actor.card.ability.name} on ${target.card.name}."
+        )
+        val effectType = when (actor.card.ability.type) {
+            AbilityType.HEAL -> CombatEffectType.HEAL
+            AbilityType.SHIELD, AbilityType.DODGE -> CombatEffectType.SHIELD
+            AbilityType.EMPOWER -> CombatEffectType.EMPOWER
+            else -> CombatEffectType.HEAL
+        }
+        return ActionOutcome(
+            updated,
+            "${actor.card.name} used ${actor.card.ability.name} on ${target.card.name}.",
+            listOf(
+                CombatEffect(effectType, actor.instanceId, target.instanceId, power, actor.card.ability.type, "+$power")
+            )
+        )
     }
 
     private fun runEnemyTurn(session: CombatSession): CombatSession {
@@ -213,4 +248,26 @@ class CombatManager(
 
     private fun List<CombatUnit>.replace(id: String, replacement: CombatUnit): List<CombatUnit> =
         map { if (it.instanceId == id) replacement else it }
+
+    private fun buildEnemyEffects(before: CombatSession, after: CombatSession): List<CombatEffect> =
+        after.playerUnits.mapNotNull { updated ->
+            val original = before.playerUnits.firstOrNull { it.instanceId == updated.instanceId } ?: return@mapNotNull null
+            val loss = original.currentHealth - updated.currentHealth
+            if (loss <= 0) null else CombatEffect(
+                CombatEffectType.DAMAGE,
+                targetId = updated.instanceId,
+                amount = loss,
+                label = "-$loss"
+            )
+        } + after.playerUnits.filterNot { it.isAlive }.mapNotNull { defeated ->
+            before.playerUnits.firstOrNull { it.instanceId == defeated.instanceId && it.isAlive }?.let {
+                CombatEffect(CombatEffectType.DEFEAT, targetId = defeated.instanceId, label = "Defeated")
+            }
+        }
+
+    private data class ActionOutcome(
+        val session: CombatSession,
+        val message: String,
+        val effects: List<CombatEffect>
+    )
 }

@@ -1,6 +1,7 @@
 package com.wilddeck.app.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -207,21 +208,29 @@ private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
         repeat(Deck.MAX_CARDS) { index ->
             val deck = decks.getOrNull(index)
             Card(Modifier.fillMaxWidth().weight(1f)) {
-                Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(deck?.name ?: "Open Deck Slot ${index + 1}", fontWeight = FontWeight.Black)
-                        Text("${deck?.cardIds?.size ?: 0}/5")
-                    }
-                    if (deck == null || deck.cardIds.isEmpty()) {
-                        Text("Empty slot", style = MaterialTheme.typography.bodySmall)
-                    } else {
-                        deck.cardIds.take(5).forEach { id ->
-                            val card = ownedCards.firstOrNull { it.id == id }
+                Row(
+                    Modifier.fillMaxSize().padding(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    DeckIconStack(deck, ownedCards)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(deck?.name ?: "Open Deck Slot ${index + 1}", fontWeight = FontWeight.Black)
+                            Text("${deck?.cardIds?.size ?: 0}/5")
+                        }
+                        if (deck == null || deck.cardIds.isEmpty()) {
+                            Text("Tap deck builder to add cards.", style = MaterialTheme.typography.bodySmall)
+                        } else {
                             Text(
-                                card?.let { "${it.imageEmoji} ${it.name}  H${it.health} D${it.danger}" } ?: "Missing card",
+                                deck.cardIds.take(5)
+                                    .mapNotNull { id -> ownedCards.firstOrNull { it.id == id }?.name }
+                                    .joinToString(", "),
                                 style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1
+                                maxLines = 2
                             )
+                            Text("Score ${deck.score} · ×${formatHomeMultiplier(deck.symbiosisMultiplier)}",
+                                style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -229,6 +238,39 @@ private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
         }
     }
 }
+
+@Composable
+private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>) {
+    val cards = deck?.cardIds.orEmpty().take(5).mapNotNull { id -> ownedCards.firstOrNull { it.id == id } }
+    Box(
+        Modifier
+            .size(width = 86.dp, height = 96.dp)
+            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
+            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (cards.isEmpty()) {
+            Text("+", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary)
+        } else {
+            cards.forEachIndexed { cardIndex, card ->
+                Box(
+                    Modifier
+                        .padding(start = (cardIndex * 7).dp, top = (cardIndex * 5).dp)
+                        .size(width = 42.dp, height = 58.dp)
+                        .background(Color.White.copy(alpha = 0.92f), RoundedCornerShape(8.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(card.imageEmoji, style = MaterialTheme.typography.headlineSmall)
+                }
+            }
+        }
+    }
+}
+
+private fun formatHomeMultiplier(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)
 
 @Composable
 private fun CollectionPagerPage(

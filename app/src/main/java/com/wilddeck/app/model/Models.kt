@@ -131,8 +131,11 @@ data class TriviaQuestion(
     val id: String,
     val prompt: String,
     val options: List<String>,
-    val correctAnswer: String
+    val correctAnswer: String,
+    val difficulty: TriviaDifficulty = TriviaDifficulty.EASY
 )
+
+enum class TriviaDifficulty { EASY, MEDIUM, HARD }
 
 data class PersistedPlayerData(
     val ownedCardIds: Set<String> = emptySet(),

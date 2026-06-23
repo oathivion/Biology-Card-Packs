@@ -3,6 +3,7 @@ package com.wilddeck.app.domain
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.RuleResult
+import com.wilddeck.app.model.TriviaDifficulty
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -125,6 +126,9 @@ class GameManagersTest {
             val questions = manager.createQuestions(card)
             assertEquals(10, questions.size)
             assertEquals(10, questions.map { it.id }.toSet().size)
+            assertEquals(3, questions.count { it.difficulty == TriviaDifficulty.EASY })
+            assertEquals(4, questions.count { it.difficulty == TriviaDifficulty.MEDIUM })
+            assertEquals(3, questions.count { it.difficulty == TriviaDifficulty.HARD })
             questions.forEach { question ->
                 assertEquals(4, question.options.size)
                 assertTrue(question.correctAnswer in question.options)

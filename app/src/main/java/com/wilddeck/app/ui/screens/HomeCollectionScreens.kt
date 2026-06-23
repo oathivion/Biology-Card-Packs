@@ -2,6 +2,7 @@ package com.wilddeck.app.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -87,7 +88,7 @@ fun HomeScreen(
                 1 -> DeckSlotsPage(decks, ownedCards)
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
                 3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onOpenCard, onAddToDeck)
-                else -> LearnMorePage(catalog, framesById, learningTriviaByCardId, humanRelationshipNotes, onOpenCard)
+                else -> LearnMorePage(catalog, learningTriviaByCardId, humanRelationshipNotes)
             }
         }
         Row(
@@ -354,10 +355,8 @@ private fun CollectionListCard(
 @Composable
 private fun LearnMorePage(
     catalog: List<AnimalCard>,
-    framesById: Map<String, CardFrame>,
     triviaByCardId: Map<String, List<TriviaQuestion>>,
-    humanRelationshipNotes: Map<String, String>,
-    onOpenCard: (String) -> Unit
+    humanRelationshipNotes: Map<String, String>
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -368,13 +367,11 @@ private fun LearnMorePage(
             Text("Learn more about...", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
             Text("Every animal includes its trivia answer key and how it relates to people.")
         }
-        items(catalog.sortedBy { it.name }, key = { "learn_${it.id}" }) { card ->
+        items(catalog.sortedBy { it.name.lowercase() }, key = { "learn_${it.id}" }) { card ->
             LearnMoreAnimalCard(
                 card = card,
-                frame = framesById[card.currentFrameId] ?: framesById.values.first(),
                 questions = triviaByCardId[card.id].orEmpty(),
-                humanNote = humanRelationshipNotes[card.id].orEmpty(),
-                onOpenCard = onOpenCard
+                humanNote = humanRelationshipNotes[card.id].orEmpty()
             )
         }
     }
@@ -383,46 +380,52 @@ private fun LearnMorePage(
 @Composable
 private fun LearnMoreAnimalCard(
     card: AnimalCard,
-    frame: CardFrame,
     questions: List<TriviaQuestion>,
-    humanNote: String,
-    onOpenCard: (String) -> Unit
+    humanNote: String
 ) {
-    Card(Modifier.fillMaxWidth()) {
+    var expanded by remember(card.id) { mutableStateOf(false) }
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable { expanded = !expanded }
+    ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                AnimalCardView(
-                    card = card,
-                    frame = frame,
-                    modifier = Modifier.size(width = 118.dp, height = 172.dp),
-                    compact = true,
-                    onClick = { onOpenCard(card.id) }
-                )
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(18.dp),
+                    modifier = Modifier.size(74.dp)
+                ) {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(card.imageEmoji, style = MaterialTheme.typography.displaySmall)
+                    }
+                }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                     Text(card.species, style = MaterialTheme.typography.bodySmall)
-                    Text(humanNote.ifBlank { "Human relationship notes are being researched for this animal." })
-                    OutlinedButton(onClick = { onOpenCard(card.id) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Open full card")
-                    }
+                    Text(if (expanded) "Tap to collapse" else "Tap to learn more", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary)
                 }
             }
-            Text("Trivia answer key", fontWeight = FontWeight.Black)
-            questions.forEach { question ->
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            question.difficulty.name.lowercase().replaceFirstChar(Char::uppercase),
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(question.prompt, fontWeight = FontWeight.Bold)
-                        Text("Correct answer: ${question.correctAnswer}")
+            if (expanded) {
+                Text(humanNote.ifBlank { "Human relationship notes are being researched for this animal." })
+                Text("Trivia", fontWeight = FontWeight.Black)
+                questions.forEach { question ->
+                    Surface(
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                question.difficulty.name.lowercase().replaceFirstChar(Char::uppercase),
+                                color = MaterialTheme.colorScheme.primary,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(question.prompt, fontWeight = FontWeight.Bold)
+                            Text(question.correctAnswer)
+                        }
                     }
                 }
             }

@@ -3,12 +3,15 @@ package com.wilddeck.app.domain
 import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
+import com.wilddeck.app.model.FrameCombatBonus
+import com.wilddeck.app.model.FrameType
 import com.wilddeck.app.model.CombatActionResult
 import com.wilddeck.app.model.CombatEffect
 import com.wilddeck.app.model.CombatEffectType
 import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
+import kotlin.math.floor
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -225,8 +228,32 @@ class CombatManager(
         val count = (1 + (round - 1) / 2).coerceAtMost(3)
         val multiplier = enemyMultiplier(round)
         return attackers.shuffled(random).take(count).mapIndexed { index, card ->
-            createUnit(card, multiplier, "enemy_${round}_${card.id}_$index")
+            createEnemyUnit(card, multiplier, round, "enemy_${round}_${card.id}_$index")
         }
+    }
+
+    private fun createEnemyUnit(
+        card: AnimalCard,
+        multiplier: Double,
+        round: Int,
+        instanceId: String
+    ): CombatUnit {
+        val frameBonusMultiplier = 1.0 + enemyFrameBonus(round)
+        val health = floor(card.health * multiplier * frameBonusMultiplier).toInt().coerceAtLeast(1)
+        val damage = if (card.combatRole == CombatRole.SUPPORT) {
+            0
+        } else {
+            floor(card.danger * multiplier * frameBonusMultiplier).toInt().coerceAtLeast(1)
+        }
+        return CombatUnit(
+            instanceId = instanceId,
+            card = card,
+            maxHealth = health,
+            currentHealth = health,
+            damage = damage,
+            multiplier = multiplier * frameBonusMultiplier,
+            frame = enemyScalingFrame(round)
+        )
     }
 
     private fun createUnit(
@@ -261,6 +288,26 @@ class CombatManager(
     }
 
     private fun enemyMultiplier(round: Int): Double = 1.0 + ((round - 1) * 0.1)
+
+    private fun enemyFrameBonus(round: Int): Double =
+        ((round - 10) * 0.1).coerceAtLeast(0.0)
+
+    private fun enemyScalingFrame(round: Int): CardFrame {
+        val bonus = enemyFrameBonus(round)
+        return CardFrame(
+            id = "enemy_scaling_$round",
+            name = "Enemy Scaling Frame",
+            borderStyle = "Threat scaling +${formatPercent(bonus)} health and damage",
+            colorArgb = 0xFF8E1D1D,
+            isUnlockedByDefault = false,
+            type = FrameType.APEX,
+            combatBonus = FrameCombatBonus(
+                description = "Enemies gain +${formatPercent(bonus)} health and damage from round scaling."
+            )
+        )
+    }
+
+    private fun formatPercent(value: Double): String = "${floor(value * 100).toInt()}%"
 
     private fun takeDamage(unit: CombatUnit, amount: Int): CombatUnit {
         val absorbed = minOf(unit.shield, amount)

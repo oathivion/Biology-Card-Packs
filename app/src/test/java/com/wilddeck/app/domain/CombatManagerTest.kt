@@ -44,6 +44,25 @@ class CombatManagerTest {
     }
 
     @Test
+    fun enemiesGainRoundScalingFrameAfterRoundTenWithFloorRounding() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }
+        val manager = CombatManager(SampleData.animalCards, Random(10))
+        var session = requireNotNull(manager.startRun(listOf(lion), 1.0))
+
+        repeat(10) {
+            session = manager.nextRound(session.copy(enemyUnits = emptyList()))
+        }
+
+        val enemy = session.enemyUnits.first()
+        val expectedMultiplier = 2.0 * 1.1
+
+        assertEquals(11, session.round)
+        assertEquals((enemy.card.health * expectedMultiplier).toInt(), enemy.maxHealth)
+        assertEquals((enemy.card.danger * expectedMultiplier).toInt(), enemy.damage)
+        assertEquals("Enemy Scaling Frame", enemy.frame?.name)
+    }
+
+    @Test
     fun attackerCanOnlyTargetEnemy() {
         val lion = SampleData.animalCards.first { it.id == "lion" }
         val manager = CombatManager(SampleData.animalCards, Random(2))

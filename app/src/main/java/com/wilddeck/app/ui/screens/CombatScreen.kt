@@ -537,7 +537,7 @@ private fun CombatTile(
                 Box(
                     Modifier
                         .fillMaxSize()
-                        .background(Color.Red.copy(alpha = if (reducedMotion) 0.18f else 0.34f))
+                        .background(Color.Red.copy(alpha = 0.5f))
                         .testTag("damage_flash_${unit.instanceId}")
                 )
             }
@@ -570,11 +570,7 @@ private fun EffectVisual(effect: CombatEffect?, animalId: String, reducedMotion:
                     fontWeight = FontWeight.Black)
                 CombatEffectType.STUN -> Text("✦ ✦", color = Color(0xFFFFD34E), fontSize = 24.sp)
                 CombatEffectType.TAUNT -> Text("!", color = Color(0xFFFF8A45), fontSize = 42.sp, fontWeight = FontWeight.Black)
-                CombatEffectType.ATTACK -> Text(
-                    animalEffectGlyph(animalId, effect.abilityType),
-                    color = Color(0xFFFFB24A),
-                    fontSize = 40.sp
-                )
+                CombatEffectType.ATTACK -> Unit
                 CombatEffectType.DEFEAT -> Text("✕", color = Color(0xFFD63B35), fontSize = 50.sp, fontWeight = FontWeight.Black)
                 else -> Unit
             }

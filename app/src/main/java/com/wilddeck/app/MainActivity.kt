@@ -30,6 +30,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.wilddeck.app.data.SampleData
+import com.wilddeck.app.domain.MiniGameManager
 import com.wilddeck.app.ui.screens.CardDetailScreen
 import com.wilddeck.app.ui.screens.CollectionScreen
 import com.wilddeck.app.ui.screens.DeckBuilderScreen
@@ -39,6 +41,7 @@ import com.wilddeck.app.ui.screens.HomeScreen
 import com.wilddeck.app.ui.screens.MiniGameScreen
 import com.wilddeck.app.ui.screens.CombatScreen
 import com.wilddeck.app.ui.theme.WildDeckTheme
+import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +79,13 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
     val currentRoute = currentEntry?.destination?.route
     val isHome = currentRoute == Routes.HOME
     val framesById = state.frames.associateBy { it.id }
+    val learningTriviaByCardId = remember(state.catalog) {
+        val manager = MiniGameManager(state.catalog, Random(0))
+        state.catalog.associate { card ->
+            card.id to manager.createQuestions(card)
+                .sortedWith(compareBy({ it.difficulty.ordinal }, { it.id }))
+        }
+    }
 
     LaunchedEffect(state.message) {
         state.message?.let {
@@ -127,6 +137,8 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     framesById = framesById,
                     unlockedFrameIds = state.unlockedFrameIds,
                     frameCost = viewModel::frameUnlockCost,
+                    learningTriviaByCardId = learningTriviaByCardId,
+                    humanRelationshipNotes = SampleData.humanRelationshipNotes,
                     onPlay = { navController.navigate(Routes.GAME) },
                     onCombat = { navController.navigate(Routes.COMBAT) },
                     onOpenCard = { navController.navigate(Routes.detail(it)) },

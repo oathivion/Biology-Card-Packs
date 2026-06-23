@@ -137,6 +137,16 @@ class GameManagersTest {
     }
 
     @Test
+    fun everyAnimalHasHumanRelationshipLearningNotes() {
+        val noteIds = SampleData.humanRelationshipNotes.keys
+
+        assertEquals(SampleData.animalCards.map { it.id }.toSet(), noteIds)
+        SampleData.humanRelationshipNotes.values.forEach { note ->
+            assertTrue(note.length > 120)
+        }
+    }
+
+    @Test
     fun miniGame_excludesOwnedAndPreviouslyPlayedAnimals() {
         val excludedIds = SampleData.animalCards.dropLast(1).map { it.id }.toSet()
         val expected = SampleData.animalCards.last()

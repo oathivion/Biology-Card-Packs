@@ -43,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
+import com.wilddeck.app.model.TriviaQuestion
 import com.wilddeck.app.ui.components.AnimalCardView
 
 @Composable
@@ -58,6 +59,8 @@ fun HomeScreen(
     framesById: Map<String, CardFrame>,
     unlockedFrameIds: Set<String>,
     frameCost: (String) -> Int,
+    learningTriviaByCardId: Map<String, List<TriviaQuestion>>,
+    humanRelationshipNotes: Map<String, String>,
     onPlay: () -> Unit,
     onCombat: () -> Unit,
     onOpenCard: (String) -> Unit,
@@ -84,7 +87,7 @@ fun HomeScreen(
                 1 -> DeckSlotsPage(decks, ownedCards)
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
                 3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onOpenCard, onAddToDeck)
-                else -> PlaceholderHub()
+                else -> LearnMorePage(catalog, framesById, learningTriviaByCardId, humanRelationshipNotes, onOpenCard)
             }
         }
         Row(
@@ -341,6 +344,85 @@ private fun CollectionListCard(
                     }
                     if (!locked) {
                         AddToDeckButton(card.id, decks, onAddToDeck, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LearnMorePage(
+    catalog: List<AnimalCard>,
+    framesById: Map<String, CardFrame>,
+    triviaByCardId: Map<String, List<TriviaQuestion>>,
+    humanRelationshipNotes: Map<String, String>,
+    onOpenCard: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Text("Learn more about...", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+            Text("Every animal includes its trivia answer key and how it relates to people.")
+        }
+        items(catalog.sortedBy { it.name }, key = { "learn_${it.id}" }) { card ->
+            LearnMoreAnimalCard(
+                card = card,
+                frame = framesById[card.currentFrameId] ?: framesById.values.first(),
+                questions = triviaByCardId[card.id].orEmpty(),
+                humanNote = humanRelationshipNotes[card.id].orEmpty(),
+                onOpenCard = onOpenCard
+            )
+        }
+    }
+}
+
+@Composable
+private fun LearnMoreAnimalCard(
+    card: AnimalCard,
+    frame: CardFrame,
+    questions: List<TriviaQuestion>,
+    humanNote: String,
+    onOpenCard: (String) -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                AnimalCardView(
+                    card = card,
+                    frame = frame,
+                    modifier = Modifier.size(width = 118.dp, height = 172.dp),
+                    compact = true,
+                    onClick = { onOpenCard(card.id) }
+                )
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+                    Text(card.species, style = MaterialTheme.typography.bodySmall)
+                    Text(humanNote.ifBlank { "Human relationship notes are being researched for this animal." })
+                    OutlinedButton(onClick = { onOpenCard(card.id) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Open full card")
+                    }
+                }
+            }
+            Text("Trivia answer key", fontWeight = FontWeight.Black)
+            questions.forEach { question ->
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            question.difficulty.name.lowercase().replaceFirstChar(Char::uppercase),
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(question.prompt, fontWeight = FontWeight.Bold)
+                        Text("Correct answer: ${question.correctAnswer}")
                     }
                 }
             }

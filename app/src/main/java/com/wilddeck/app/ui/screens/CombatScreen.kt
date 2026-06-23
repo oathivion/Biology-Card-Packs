@@ -533,14 +533,6 @@ private fun CombatTile(
                     textAlign = TextAlign.Center, maxLines = 2)
             }
             EffectVisual(effect, unit.card.id, reducedMotion)
-            if (impact) {
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .background(Color.Red.copy(alpha = 0.5f))
-                        .testTag("damage_flash_${unit.instanceId}")
-                )
-            }
         }
     }
 }

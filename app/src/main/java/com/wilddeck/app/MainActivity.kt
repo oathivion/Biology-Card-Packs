@@ -120,21 +120,19 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     lockedCount = state.catalog.size - state.ownedCards.size,
                     deckCount = state.decks.size,
                     progressionPoints = state.progressionPoints,
+                    catalog = state.catalog,
+                    ownedCards = state.ownedCards,
+                    decks = state.decks,
+                    frames = state.frames,
+                    framesById = framesById,
+                    unlockedFrameIds = state.unlockedFrameIds,
+                    frameCost = viewModel::frameUnlockCost,
                     onPlay = { navController.navigate(Routes.GAME) },
                     onCombat = { navController.navigate(Routes.COMBAT) },
-                    onCollection = { navController.navigate(Routes.COLLECTION) },
-                    onDecks = { navController.navigate(Routes.DECKS) },
-                    onFrames = { navController.navigate(Routes.FRAME_STORE) },
-                    onDetails = {
-                        (state.ownedCards.firstOrNull() ?: state.catalog.firstOrNull())
-                            ?.let { navController.navigate(Routes.detail(it.id)) }
-                            ?: viewModel.showMessage("Card data is missing.")
-                    },
-                    onLockedDetails = {
-                        state.catalog.firstOrNull { candidate -> state.ownedCards.none { it.id == candidate.id } }
-                            ?.let { navController.navigate(Routes.detail(it.id)) }
-                            ?: viewModel.showMessage("Every creature is unlocked.")
-                    }
+                    onOpenCard = { navController.navigate(Routes.detail(it)) },
+                    onAddToDeck = viewModel::addCardToDeck,
+                    onBuyFrame = viewModel::unlockFrame,
+                    onCustomizeFrames = { navController.navigate(Routes.frames()) }
                 )
             }
             composable(Routes.COLLECTION) {

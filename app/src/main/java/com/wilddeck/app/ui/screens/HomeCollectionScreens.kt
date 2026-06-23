@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.items as gridItems
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -48,13 +50,19 @@ fun HomeScreen(
     lockedCount: Int,
     deckCount: Int,
     progressionPoints: Int,
+    catalog: List<AnimalCard>,
+    ownedCards: List<AnimalCard>,
+    decks: List<Deck>,
+    frames: List<CardFrame>,
+    framesById: Map<String, CardFrame>,
+    unlockedFrameIds: Set<String>,
+    frameCost: (String) -> Int,
     onPlay: () -> Unit,
     onCombat: () -> Unit,
-    onCollection: () -> Unit,
-    onDecks: () -> Unit,
-    onFrames: () -> Unit,
-    onDetails: () -> Unit,
-    onLockedDetails: () -> Unit
+    onOpenCard: (String) -> Unit,
+    onAddToDeck: (String, String) -> Unit,
+    onBuyFrame: (String) -> Unit,
+    onCustomizeFrames: () -> Unit
 ) {
     val pagerState = rememberPagerState(initialPage = 2, pageCount = { 5 })
     Column(Modifier.fillMaxSize()) {
@@ -64,10 +72,17 @@ fun HomeScreen(
             beyondViewportPageCount = 1
         ) { page ->
             when (page) {
-                0 -> HubPage("Frame Store", "Buy and equip animated frames with Wild Run bonuses.", "Open Frame Store", onFrames, "SECOND LEFT")
-                1 -> HubPage("Decks", "$deckCount of 5 decks created.", "Build Decks", onDecks, "FIRST LEFT")
+                0 -> FrameStoreScreen(
+                    frames = frames,
+                    unlockedFrameIds = unlockedFrameIds,
+                    points = progressionPoints,
+                    frameCost = frameCost,
+                    onBuy = onBuyFrame,
+                    onCustomize = onCustomizeFrames
+                )
+                1 -> DeckSlotsPage(decks, ownedCards)
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
-                3 -> CollectionHub(ownedCount, lockedCount, onCollection, onDetails, onLockedDetails)
+                3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onOpenCard, onAddToDeck)
                 else -> PlaceholderHub()
             }
         }
@@ -184,6 +199,114 @@ private fun PlaceholderHub() {
 }
 
 @Composable
+private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
+    Column(
+        Modifier.fillMaxSize().padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        repeat(Deck.MAX_CARDS) { index ->
+            val deck = decks.getOrNull(index)
+            Card(Modifier.fillMaxWidth().weight(1f)) {
+                Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(deck?.name ?: "Open Deck Slot ${index + 1}", fontWeight = FontWeight.Black)
+                        Text("${deck?.cardIds?.size ?: 0}/5")
+                    }
+                    if (deck == null || deck.cardIds.isEmpty()) {
+                        Text("Empty slot", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        deck.cardIds.take(5).forEach { id ->
+                            val card = ownedCards.firstOrNull { it.id == id }
+                            Text(
+                                card?.let { "${it.imageEmoji} ${it.name}  H${it.health} D${it.danger}" } ?: "Missing card",
+                                style = MaterialTheme.typography.bodySmall,
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CollectionPagerPage(
+    catalog: List<AnimalCard>,
+    ownedCards: List<AnimalCard>,
+    framesById: Map<String, CardFrame>,
+    decks: List<Deck>,
+    onOpenCard: (String) -> Unit,
+    onAddToDeck: (String, String) -> Unit
+) {
+    val ownedIds = ownedCards.map { it.id }.toSet()
+    val unlocked = ownedCards.sortedBy { it.name }
+    val locked = catalog.filterNot { it.id in ownedIds }.sortedBy { it.name }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        item {
+            Text("Cards & Collection", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
+            Text("Unlocked cards first, then locked cards. Both are alphabetical.")
+        }
+        item { CollectionSectionTitle("Unlocked", unlocked.size) }
+        items(unlocked, key = { "unlocked_${it.id}" }) { card ->
+            CollectionListCard(card, framesById, decks, locked = false, onOpenCard, onAddToDeck)
+        }
+        item { CollectionSectionTitle("Locked", locked.size) }
+        items(locked, key = { "locked_${it.id}" }) { card ->
+            CollectionListCard(card, framesById, decks, locked = true, onOpenCard, onAddToDeck)
+        }
+    }
+}
+
+@Composable
+private fun CollectionSectionTitle(title: String, count: Int) {
+    Text("$title · $count", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
+}
+
+@Composable
+private fun CollectionListCard(
+    card: AnimalCard,
+    framesById: Map<String, CardFrame>,
+    decks: List<Deck>,
+    locked: Boolean,
+    onOpenCard: (String) -> Unit,
+    onAddToDeck: (String, String) -> Unit
+) {
+    Card(Modifier.fillMaxWidth()) {
+        Row(
+            Modifier.fillMaxWidth().padding(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AnimalCardView(
+                card = card,
+                frame = framesById[card.currentFrameId] ?: framesById.values.first(),
+                modifier = Modifier.size(width = 112.dp, height = 160.dp),
+                compact = true,
+                onClick = { onOpenCard(card.id) }
+            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(if (locked) "Locked: ${card.name}" else card.name, fontWeight = FontWeight.Black)
+                Text("${card.species} · ${card.rarity}", style = MaterialTheme.typography.bodySmall)
+                Text("H${card.health} D${card.danger} · ${card.habitat}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { onOpenCard(card.id) }, modifier = Modifier.weight(1f)) {
+                        Text("Details")
+                    }
+                    if (!locked) {
+                        AddToDeckButton(card.id, decks, onAddToDeck, Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun StatSummary(value: String, label: String, modifier: Modifier = Modifier) {
     Card(modifier) {
         Column(Modifier.padding(horizontal = 22.dp, vertical = 12.dp)) {
@@ -223,7 +346,7 @@ fun CollectionScreen(
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
-        items(cards, key = { it.id }) { card ->
+        gridItems(cards, key = { it.id }) { card ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 AnimalCardView(
                     card = card,

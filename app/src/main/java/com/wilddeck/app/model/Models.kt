@@ -45,7 +45,9 @@ data class CardFrame(
     val colorArgb: Long,
     val isUnlockedByDefault: Boolean,
     val rarityRequirement: CardRarity? = null,
-    val effect: FrameEffect = FrameEffect.NONE
+    val effect: FrameEffect = FrameEffect.NONE,
+    val type: FrameType = FrameType.BALANCED,
+    val combatBonus: FrameCombatBonus = FrameCombatBonus()
 )
 
 enum class FrameEffect {
@@ -61,6 +63,25 @@ enum class FrameEffect {
     RAIN,
     STARFIELD
 }
+
+enum class FrameType(val displayName: String, val statMultiplier: Double) {
+    BALANCED("Balanced", 1.00),
+    ASSAULT("Assault", 1.08),
+    GUARDIAN("Guardian", 1.06),
+    SUPPORT("Support", 1.05),
+    CONTROL("Control", 1.04),
+    APEX("Apex", 1.10)
+}
+
+data class FrameCombatBonus(
+    val healthBonus: Int = 0,
+    val damageBonus: Int = 0,
+    val openingShield: Int = 0,
+    val damageMitigation: Int = 0,
+    val attackPowerBonus: Int = 0,
+    val supportPowerBonus: Int = 0,
+    val description: String = "No combat bonus."
+)
 
 enum class RelationshipType(val multiplier: Double) {
     MUTUALISM(1.5),
@@ -142,6 +163,10 @@ data class CombatUnit(
     val currentHealth: Int,
     val damage: Int,
     val multiplier: Double,
+    val frame: CardFrame? = null,
+    val damageMitigation: Int = 0,
+    val attackPowerBonus: Int = 0,
+    val supportPowerBonus: Int = 0,
     val hasActed: Boolean = false,
     val shield: Int = 0,
     val isTaunting: Boolean = false,

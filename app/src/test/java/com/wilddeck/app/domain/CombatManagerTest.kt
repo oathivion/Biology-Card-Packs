@@ -30,6 +30,20 @@ class CombatManagerTest {
     }
 
     @Test
+    fun equippedFramesModifyPlayerCombatStats() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }.copy(currentFrameId = "ember")
+        val manager = CombatManager(SampleData.animalCards, random = Random(9), frames = SampleData.frames)
+
+        val session = requireNotNull(manager.startRun(listOf(lion), 1.0))
+        val unit = session.playerUnits.single()
+
+        assertEquals("ember", unit.frame?.id)
+        assertEquals(11, unit.damage)
+        assertEquals(1, unit.attackPowerBonus)
+        assertTrue(unit.multiplier > 1.0)
+    }
+
+    @Test
     fun attackerCanOnlyTargetEnemy() {
         val lion = SampleData.animalCards.first { it.id == "lion" }
         val manager = CombatManager(SampleData.animalCards, Random(2))

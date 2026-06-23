@@ -523,6 +523,10 @@ private fun CombatTile(
                     fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelSmall, maxLines = 1)
                 if (unit.shield > 0) Text("◈ ${unit.shield}", color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelSmall)
+                unit.frame?.let { frame ->
+                    Text(frame.type.displayName, color = Color(frame.colorArgb), style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold, maxLines = 1)
+                }
                 Text(unit.card.combatRole.name, color = roleColor, style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold)
                 Text(unit.card.ability.name, style = MaterialTheme.typography.labelSmall,
@@ -673,6 +677,13 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                         fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                     InspectionBlock("Animal", unit.card.description)
                     InspectionBlock("Ability: ${unit.card.ability.name}", unit.card.ability.description)
+                    unit.frame?.let { frame ->
+                        InspectionBlock(
+                            "Frame: ${frame.name}",
+                            "${frame.type.displayName} ×${formatCombatMultiplier(frame.type.statMultiplier)}. " +
+                                frame.combatBonus.description
+                        )
+                    }
                     InspectionBlock("Habitat", unit.card.habitat)
                     InspectionBlock("Diet", unit.card.food)
                     Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Return to battle") }

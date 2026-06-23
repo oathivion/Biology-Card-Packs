@@ -2,6 +2,7 @@ package com.wilddeck.app.domain
 
 import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.AnimalCard
+import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.CombatActionResult
 import com.wilddeck.app.model.CombatEffect
 import com.wilddeck.app.model.CombatEffectType
@@ -13,12 +14,15 @@ import kotlin.random.Random
 
 class CombatManager(
     private val catalog: List<AnimalCard>,
-    private val random: Random = Random.Default
+    private val random: Random = Random.Default,
+    frames: List<CardFrame> = emptyList()
 ) {
+    private val framesById = frames.associateBy { it.id }
+
     fun startRun(playerCards: List<AnimalCard>, playerMultiplier: Double): CombatSession? {
         if (playerCards.isEmpty()) return null
         val players = playerCards.take(5).mapIndexed { index, card ->
-            createUnit(card, playerMultiplier, "player_${card.id}_$index")
+            createUnit(card, playerMultiplier, "player_${card.id}_$index", applyFrameBonuses = true)
         }
         return CombatSession(
             round = 1,
@@ -99,7 +103,7 @@ class CombatManager(
         targetId: String
     ): ActionOutcome? {
         val target = session.enemyUnits.firstOrNull { it.instanceId == targetId && it.isAlive } ?: return null
-        var damage = actor.damage
+        var damage = actor.damage + actor.attackPowerBonus
         var shieldGain = 0
         var taunts = false
         var stuns = false
@@ -153,7 +157,7 @@ class CombatManager(
         targetId: String
     ): ActionOutcome? {
         val target = session.playerUnits.firstOrNull { it.instanceId == targetId && it.isAlive } ?: return null
-        val power = actor.card.ability.power
+        val power = actor.card.ability.power + actor.supportPowerBonus
         val supported = when (actor.card.ability.type) {
             AbilityType.HEAL -> target.copy(
                 currentHealth = (target.currentHealth + power).coerceAtMost(target.maxHealth)
@@ -225,21 +229,42 @@ class CombatManager(
         }
     }
 
-    private fun createUnit(card: AnimalCard, multiplier: Double, instanceId: String): CombatUnit {
-        val health = (card.health * multiplier).roundToInt().coerceAtLeast(1)
+    private fun createUnit(
+        card: AnimalCard,
+        multiplier: Double,
+        instanceId: String,
+        applyFrameBonuses: Boolean = false
+    ): CombatUnit {
+        val frame = if (applyFrameBonuses) framesById[card.currentFrameId] else null
+        val bonus = frame?.combatBonus
+        val effectiveMultiplier = multiplier * (frame?.type?.statMultiplier ?: 1.0)
+        val health = ((card.health * effectiveMultiplier).roundToInt() + (bonus?.healthBonus ?: 0)).coerceAtLeast(1)
         val damage = if (card.combatRole == CombatRole.SUPPORT) {
             0
         } else {
-            (card.danger * multiplier).roundToInt().coerceAtLeast(1)
+            ((card.danger * effectiveMultiplier).roundToInt() + (bonus?.damageBonus ?: 0)).coerceAtLeast(1)
         }
-        return CombatUnit(instanceId, card, health, health, damage, multiplier)
+        val openingShield = bonus?.openingShield ?: 0
+        return CombatUnit(
+            instanceId = instanceId,
+            card = card,
+            maxHealth = health,
+            currentHealth = health,
+            damage = damage,
+            multiplier = effectiveMultiplier,
+            frame = frame,
+            damageMitigation = bonus?.damageMitigation ?: 0,
+            attackPowerBonus = bonus?.attackPowerBonus ?: 0,
+            supportPowerBonus = bonus?.supportPowerBonus ?: 0,
+            shield = openingShield
+        )
     }
 
     private fun enemyMultiplier(round: Int): Double = 1.0 + ((round - 1) * 0.1)
 
     private fun takeDamage(unit: CombatUnit, amount: Int): CombatUnit {
         val absorbed = minOf(unit.shield, amount)
-        val remainingDamage = amount - absorbed
+        val remainingDamage = (amount - absorbed - unit.damageMitigation).coerceAtLeast(0)
         return unit.copy(
             currentHealth = (unit.currentHealth - remainingDamage).coerceAtLeast(0),
             shield = unit.shield - absorbed

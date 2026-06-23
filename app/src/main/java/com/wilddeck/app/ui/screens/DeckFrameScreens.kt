@@ -231,7 +231,7 @@ fun FrameCustomizationScreen(
     ) {
         item {
             Text("Frame Workshop", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-            Text("Frames are cosmetic and never alter card stats or deck scores.")
+            Text("Frames now add small Wild Run bonuses through their type and unique perk.")
         }
         item {
             var cardMenu by remember { mutableStateOf(false) }
@@ -277,7 +277,11 @@ fun FrameCustomizationScreen(
                 Box(Modifier.size(38.dp).background(Color(frame.colorArgb), RoundedCornerShape(8.dp)))
                 Column(Modifier.weight(1f)) {
                     Text(frame.name, fontWeight = FontWeight.Bold)
-                    Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Text(frame.combatBonus.description, style = MaterialTheme.typography.labelSmall)
                     if (frame.effect != com.wilddeck.app.model.FrameEffect.NONE) {
                         Text(
                             "Animated: ${frame.effect.name.lowercase().replace('_', ' ')}",
@@ -326,7 +330,7 @@ fun FrameStoreScreen(
     ) {
         item {
             Text("Frame Store", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-            Text("$points points available · Frames are cosmetic only.")
+            Text("$points points available · Frames add Wild Run bonuses.")
         }
         items(frames, key = { it.id }) { frame ->
             val unlocked = frame.id in unlockedFrameIds
@@ -343,7 +347,11 @@ fun FrameStoreScreen(
                     )
                     Column(Modifier.weight(1f)) {
                         Text(frame.name, fontWeight = FontWeight.Bold)
-                        Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(frame.combatBonus.description, style = MaterialTheme.typography.labelSmall)
                         Text(
                             if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
                             else "Effect: ${frame.effect.name.lowercase().replace('_', ' ')}",

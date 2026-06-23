@@ -1,6 +1,7 @@
 package com.wilddeck.app.data
 
 import com.wilddeck.app.model.FrameEffect
+import com.wilddeck.app.model.FrameType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -13,5 +14,7 @@ class FrameEffectsTest {
         assertEquals(10, animatedFrames.size)
         assertEquals(10, animatedFrames.map { it.effect }.toSet().size)
         assertTrue(animatedFrames.none { it.isUnlockedByDefault })
+        assertTrue(animatedFrames.all { it.type != FrameType.BALANCED })
+        assertTrue(animatedFrames.all { it.combatBonus.description != "No combat bonus." })
     }
 }

@@ -56,7 +56,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         loaded.selectedFrames
     )
     private val miniGameManager = MiniGameManager(SampleData.animalCards)
-    private val combatManager = CombatManager(SampleData.animalCards)
+    private val combatManager = CombatManager(SampleData.animalCards, frames = SampleData.frames)
     private var previousMiniGameCardId: String? = null
     private var progressionPoints = loaded.progressionPoints
     private var reducedMotion = loaded.reducedMotion
@@ -107,8 +107,9 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             .firstOrNull { it.id == deckId && it.cardIds.isNotEmpty() }
             ?.cardIds
             ?.mapNotNull(catalog::get)
+            ?.map { it.withSelectedFrame() }
             .orEmpty()
-        val cards = selectedDeckCards.ifEmpty { inventory.getAll(catalog).take(5) }
+        val cards = selectedDeckCards.ifEmpty { inventory.getAll(catalog).take(5).map { it.withSelectedFrame() } }
         if (cards.isEmpty()) {
             showMessage("Earn or unlock a creature before starting combat.")
             return
@@ -175,14 +176,14 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun frameUnlockCost(frameId: String): Int = when (frameId) {
-        "desert" -> 2
-        "arctic" -> 3
-        "gold" -> 5
-        "radiant", "bubble", "canopy" -> 2
-        "starlight", "ember", "glacier", "monsoon" -> 3
-        "aurora", "storm" -> 4
-        "cosmic" -> 5
-        else -> 1
+        "desert" -> 20
+        "arctic" -> 30
+        "gold" -> 50
+        "radiant", "bubble", "canopy" -> 20
+        "starlight", "ember", "glacier", "monsoon" -> 30
+        "aurora", "storm" -> 40
+        "cosmic" -> 50
+        else -> 10
     }
 
     fun createDeck(name: String) {

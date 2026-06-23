@@ -64,7 +64,7 @@ fun HomeScreen(
             beyondViewportPageCount = 1
         ) { page ->
             when (page) {
-                0 -> HubPage("Frame Store", "Buy and equip cosmetic animated frames.", "Open Frame Store", onFrames, "SECOND LEFT")
+                0 -> HubPage("Frame Store", "Buy and equip animated frames with Wild Run bonuses.", "Open Frame Store", onFrames, "SECOND LEFT")
                 1 -> HubPage("Decks", "$deckCount of 5 decks created.", "Build Decks", onDecks, "FIRST LEFT")
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
                 3 -> CollectionHub(ownedCount, lockedCount, onCollection, onDetails, onLockedDetails)

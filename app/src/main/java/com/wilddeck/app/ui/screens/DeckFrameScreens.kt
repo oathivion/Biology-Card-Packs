@@ -219,6 +219,7 @@ fun FrameCustomizationScreen(
     var selectedFrameId by remember(selectedCardId) {
         mutableStateOf(ownedCards.firstOrNull { it.id == selectedCardId }?.currentFrameId ?: "black")
     }
+    var inspectedFrame by remember { mutableStateOf<CardFrame?>(null) }
     val card = ownedCards.firstOrNull { it.id == selectedCardId }
     val previewFrame = frames.firstOrNull { it.id == selectedFrameId } ?: frames.first()
 
@@ -233,6 +234,8 @@ fun FrameCustomizationScreen(
         return
     }
 
+    Box(Modifier.fillMaxSize()) {
+        BubbleShopBackground()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
@@ -278,14 +281,23 @@ fun FrameCustomizationScreen(
                         Color(frame.colorArgb),
                         RoundedCornerShape(12.dp)
                     )
-                    .clickable(enabled = unlocked) { selectedFrameId = frame.id }
+                    .clickable { inspectedFrame = frame }
                     .padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Box(Modifier.size(38.dp).background(Color(frame.colorArgb), RoundedCornerShape(8.dp)))
+                Box(
+                    Modifier.size(54.dp)
+                        .background(Color(frame.colorArgb), RoundedCornerShape(12.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                )
                 Column(Modifier.weight(1f)) {
                     Text(frame.name, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (selectedFrameId == frame.id) "Selected • tap for details" else "Tap for details",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    if (false) {
                     Text(
                         "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
                         style = MaterialTheme.typography.bodySmall
@@ -298,8 +310,9 @@ fun FrameCustomizationScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                     }
+                    }
                 }
-                Text(if (unlocked) "Available" else "Locked")
+                if (false) Text(if (unlocked) "Available" else "Locked")
             }
         }
         item {
@@ -318,6 +331,66 @@ fun FrameCustomizationScreen(
             }
         }
     }
+    }
+    inspectedFrame?.let { frame ->
+        FrameWorkshopDetailDialog(
+            frame = frame,
+            unlocked = frame.id in unlockedFrameIds,
+            selected = frame.id == selectedFrameId,
+            onSelect = { selectedFrameId = frame.id },
+            onDismiss = { inspectedFrame = null }
+        )
+    }
+}
+
+@Composable
+private fun FrameWorkshopDetailDialog(
+    frame: CardFrame,
+    unlocked: Boolean,
+    selected: Boolean,
+    onSelect: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier
+                        .size(42.dp)
+                        .background(Color(frame.colorArgb), RoundedCornerShape(10.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
+                )
+                Text(frame.name, fontWeight = FontWeight.Black)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                DetailBullet("Style", frame.borderStyle)
+                DetailBullet("Type", frame.type.displayName, keywordColor(frame.type.displayName))
+                DetailBullet("Multiplier", "x${formatMultiplier(frame.type.statMultiplier)} to frame-scaled values")
+                DetailBullet("Combat bonus", frame.combatBonus.description)
+                DetailBullet(
+                    "Effect",
+                    if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
+                    else frame.effect.name.lowercase().replace('_', ' ').replaceFirstChar(Char::uppercase)
+                )
+                DetailBullet("Status", if (unlocked) "Owned" else "Locked")
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    onSelect()
+                    onDismiss()
+                },
+                enabled = unlocked && !selected
+            ) { Text(if (selected) "Selected" else "Select Frame") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Close") }
+        }
+    )
 }
 
 private fun formatMultiplier(value: Double): String =

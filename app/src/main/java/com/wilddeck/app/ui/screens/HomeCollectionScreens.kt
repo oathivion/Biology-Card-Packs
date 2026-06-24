@@ -132,8 +132,6 @@ private fun PlayLanding(
             StatSummary("$progressionPoints", "points", Modifier.weight(1f))
         }
         Spacer(Modifier.height(22.dp))
-        HomeButton("ANIMAL TRIVIA", "Spend a point, answer questions, earn a new creature", onPlay)
-        Spacer(Modifier.height(12.dp))
         HomeButton("WILD RUN", "Battle with your deck and earn progression points", onCombat)
         Spacer(Modifier.height(20.dp))
         Text("Swipe left or right for decks, cards, frames, and more.", textAlign = TextAlign.Center,

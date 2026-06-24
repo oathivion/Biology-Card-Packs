@@ -240,7 +240,7 @@ object SampleData {
             type = FrameType.GUARDIAN,
             combatBonus = FrameCombatBonus(healthBonus = 2, damageMitigation = 2,
                 description = "+2 health and reduces each hit by 2.")),
-        CardFrame("tuskguard", "Tuskguard Frame", "Walrus and narwhal tusk arcs guard the card", 0xFFD8D6C8, false,
+        CardFrame("tuskguard", "Tuskguard Frame", "Walrus tusk arcs guard the card", 0xFFD8D6C8, false,
             effect = FrameEffect.TUSK_GUARD,
             type = FrameType.CONTROL,
             combatBonus = FrameCombatBonus(openingShield = 2, attackPowerBonus = 1,

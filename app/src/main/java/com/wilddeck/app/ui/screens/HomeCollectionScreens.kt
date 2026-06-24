@@ -1,5 +1,12 @@
 package com.wilddeck.app.ui.screens
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,8 +32,10 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +45,9 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -88,10 +100,18 @@ fun HomeScreen(
                     onBuy = onBuyFrame,
                     onCustomize = onCustomizeFrames
                 )
-                1 -> DeckSlotsPage(decks, ownedCards, onCreateDeck, onAddToDeck, onRemoveFromDeck)
-                2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
-                3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onPlay, onOpenCard, onAddToDeck)
-                else -> LearnMorePage(catalog, ownedCards, learningTriviaByCardId, humanRelationshipNotes)
+                1 -> MetalShineBackground {
+                    DeckSlotsPage(decks, ownedCards, onCreateDeck, onAddToDeck, onRemoveFromDeck)
+                }
+                2 -> PredatorEyesBackground {
+                    PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
+                }
+                3 -> WoodBackground {
+                    CollectionPagerPage(catalog, ownedCards, framesById, decks, onPlay, onOpenCard, onAddToDeck)
+                }
+                else -> LightBrownBackground {
+                    LearnMorePage(catalog, ownedCards, learningTriviaByCardId, humanRelationshipNotes)
+                }
             }
         }
         Row(
@@ -201,6 +221,97 @@ private fun PlaceholderHub() {
         Text("SECOND RIGHT", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
         Text("Coming Soon", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
         Text("This space is reserved for the next major feature.", textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun MetalShineBackground(content: @Composable () -> Unit) {
+    val transition = rememberInfiniteTransition(label = "metal-shine")
+    val shine by transition.animateFloat(
+        initialValue = -0.45f,
+        targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(5200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shine-position"
+    )
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            drawRect(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF2F3338), Color(0xFFB8BEC5), Color(0xFF555B63), Color(0xFF1E2227))
+                )
+            )
+            repeat(12) { index ->
+                val y = size.height * index / 11f
+                drawRect(
+                    Color.White.copy(alpha = if (index % 2 == 0) 0.08f else 0.035f),
+                    topLeft = Offset(0f, y),
+                    size = Size(size.width, size.height / 28f)
+                )
+            }
+            val x = size.width * shine
+            drawRect(
+                Brush.horizontalGradient(
+                    listOf(Color.Transparent, Color.White.copy(alpha = 0.32f), Color.Transparent)
+                ),
+                topLeft = Offset(x - size.width * 0.18f, 0f),
+                size = Size(size.width * 0.22f, size.height)
+            )
+        }
+        content()
+    }
+}
+
+@Composable
+private fun PredatorEyesBackground(content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        Canvas(Modifier.fillMaxSize()) {
+            val eyeY = size.height * 0.14f
+            val gap = size.width * 0.14f
+            listOf(size.width / 2f - gap, size.width / 2f + gap).forEach { x ->
+                drawCircle(Color(0xFFFF1E1E).copy(alpha = 0.95f), radius = 13f, center = Offset(x, eyeY))
+                drawCircle(Color(0xFFFF5A5A).copy(alpha = 0.35f), radius = 30f, center = Offset(x, eyeY))
+            }
+        }
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            content()
+        }
+    }
+}
+
+@Composable
+private fun WoodBackground(content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize()) {
+        Canvas(Modifier.fillMaxSize()) {
+            drawRect(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF6B3F20), Color(0xFF9A6334), Color(0xFF5B341B))
+                )
+            )
+            repeat(18) { index ->
+                val x = size.width * index / 17f
+                drawRect(
+                    Color(0xFF2E170B).copy(alpha = 0.16f),
+                    topLeft = Offset(x, 0f),
+                    size = Size(3f + (index % 4), size.height)
+                )
+                drawCircle(
+                    Color(0xFF3A1B0D).copy(alpha = 0.10f),
+                    radius = 38f + (index % 5) * 9f,
+                    center = Offset(x + 22f, size.height * ((index % 7) + 1) / 8f)
+                )
+            }
+        }
+        content()
+    }
+}
+
+@Composable
+private fun LightBrownBackground(content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize().background(Color(0xFFD8B98A))) {
+        content()
     }
 }
 

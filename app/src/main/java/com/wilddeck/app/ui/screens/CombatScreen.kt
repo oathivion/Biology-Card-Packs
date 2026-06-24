@@ -405,9 +405,6 @@ private fun CombatBoard(
             TextButton(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("End Run") }
         }
 
-        activeEffects.lastOrNull { it.type == CombatEffectType.ROUND_CLEAR || it.type == CombatEffectType.ROUND_START }
-            ?.let { RoundBanner(it.label, reducedMotion) }
-        activeEffects.lastOrNull { it.type == CombatEffectType.POINT }?.let { PointReward(reducedMotion) }
     }
 
     inspectedUnit?.let { unit ->
@@ -606,7 +603,6 @@ private fun CombatTile(
                 Text(unit.card.ability.name, style = MaterialTheme.typography.labelSmall,
                     textAlign = TextAlign.Center, maxLines = 2)
             }
-            EffectVisual(effect, unit.card.id, reducedMotion)
         }
     }
 }

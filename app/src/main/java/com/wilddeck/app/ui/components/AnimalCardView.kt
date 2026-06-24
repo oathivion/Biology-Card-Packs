@@ -199,6 +199,42 @@ fun animalImageResourceId(cardId: String): Int? = when (cardId) {
     "pistol_shrimp" -> R.drawable.animal_pistol_shrimp
     "goby" -> R.drawable.animal_goby
     "remora" -> R.drawable.animal_remora
+    "blue_whale" -> R.drawable.animal_blue_whale
+    "octopus" -> R.drawable.animal_octopus
+    "green_sea_turtle" -> R.drawable.animal_green_sea_turtle
+    "manta_ray" -> R.drawable.animal_manta_ray
+    "bottlenose_dolphin" -> R.drawable.animal_bottlenose_dolphin
+    "seahorse" -> R.drawable.animal_seahorse
+    "squid" -> R.drawable.animal_squid
+    "moray_eel" -> R.drawable.animal_moray_eel
+    "humpback_whale" -> R.drawable.animal_humpback_whale
+    "jaguar" -> R.drawable.animal_jaguar
+    "gorilla" -> R.drawable.animal_gorilla
+    "orangutan" -> R.drawable.animal_orangutan
+    "toucan" -> R.drawable.animal_toucan
+    "poison_dart_frog" -> R.drawable.animal_poison_dart_frog
+    "sloth" -> R.drawable.animal_sloth
+    "tapir" -> R.drawable.animal_tapir
+    "anaconda" -> R.drawable.animal_anaconda
+    "leafcutter_ant" -> R.drawable.animal_leafcutter_ant
+    "polar_bear" -> R.drawable.animal_polar_bear
+    "emperor_penguin" -> R.drawable.animal_emperor_penguin
+    "walrus" -> R.drawable.animal_walrus
+    "arctic_fox" -> R.drawable.animal_arctic_fox
+    "musk_ox" -> R.drawable.animal_musk_ox
+    "snow_leopard" -> R.drawable.animal_snow_leopard
+    "beluga_whale" -> R.drawable.animal_beluga_whale
+    "reindeer" -> R.drawable.animal_reindeer
+    "harp_seal" -> R.drawable.animal_harp_seal
+    "dromedary_camel" -> R.drawable.animal_dromedary_camel
+    "fennec_fox" -> R.drawable.animal_fennec_fox
+    "emperor_scorpion" -> R.drawable.animal_emperor_scorpion
+    "gila_monster" -> R.drawable.animal_gila_monster
+    "meerkat" -> R.drawable.animal_meerkat
+    "roadrunner" -> R.drawable.animal_roadrunner
+    "sidewinder" -> R.drawable.animal_sidewinder
+    "addax" -> R.drawable.animal_addax
+    "frilled_lizard" -> R.drawable.animal_frilled_lizard
     else -> null
 }
 

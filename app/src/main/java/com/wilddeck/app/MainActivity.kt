@@ -13,13 +13,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -74,7 +71,6 @@ private object Routes {
 fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
     val state = viewModel.uiState
     val navController = rememberNavController()
-    val snackbarHostState = remember { SnackbarHostState() }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
     val isHome = currentRoute == Routes.HOME
@@ -84,13 +80,6 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
         state.catalog.associate { card ->
             card.id to manager.createQuestions(card)
                 .sortedWith(compareBy({ it.difficulty.ordinal }, { it.id }))
-        }
-    }
-
-    LaunchedEffect(state.message) {
-        state.message?.let {
-            snackbarHostState.showSnackbar(it)
-            viewModel.clearMessage()
         }
     }
 
@@ -104,8 +93,7 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     }
                 )
             }
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        }
     ) { innerPadding ->
         NavHost(
             navController = navController,

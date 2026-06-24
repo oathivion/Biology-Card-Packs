@@ -88,7 +88,7 @@ fun HomeScreen(
                 )
                 1 -> DeckSlotsPage(decks, ownedCards)
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
-                3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onOpenCard, onAddToDeck)
+                3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onPlay, onOpenCard, onAddToDeck)
                 else -> LearnMorePage(catalog, ownedCards, learningTriviaByCardId, humanRelationshipNotes)
             }
         }
@@ -283,6 +283,7 @@ private fun CollectionPagerPage(
     ownedCards: List<AnimalCard>,
     framesById: Map<String, CardFrame>,
     decks: List<Deck>,
+    onUnlock: () -> Unit,
     onOpenCard: (String) -> Unit,
     onAddToDeck: (String, String) -> Unit
 ) {
@@ -297,6 +298,10 @@ private fun CollectionPagerPage(
         item {
             Text("Cards & Collection", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
             Text("Unlocked cards first, then locked cards. Both are alphabetical.")
+            Spacer(Modifier.height(10.dp))
+            Button(onClick = onUnlock, modifier = Modifier.fillMaxWidth()) {
+                Text("Unlock New Card")
+            }
         }
         item { CollectionSectionTitle("Unlocked", unlocked.size) }
         items(unlocked, key = { "unlocked_${it.id}" }) { card ->

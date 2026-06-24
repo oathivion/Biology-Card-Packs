@@ -85,6 +85,7 @@ import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
 import com.wilddeck.app.model.Deck
+import com.wilddeck.app.ui.components.AnimalCardView
 import com.wilddeck.app.ui.components.AnimalPhoto
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
@@ -555,6 +556,7 @@ private fun CombatTile(
     )
     val impact = effect?.type == CombatEffectType.DAMAGE
     val glow = effect?.type in setOf(CombatEffectType.HEAL, CombatEffectType.SHIELD, CombatEffectType.EMPOWER)
+    val frameColor = unit.frame?.let { Color(it.colorArgb) }
     val shake by animateFloatAsState(
         targetValue = if (impact && !reducedMotion) 7f else 0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy),
@@ -563,6 +565,7 @@ private fun CombatTile(
     val borderColor = when {
         highlighted -> Color(0xFF51D88A)
         glow -> effectColor(effect)
+        frameColor != null -> frameColor
         enemy -> MaterialTheme.colorScheme.error
         else -> roleColor
     }
@@ -576,7 +579,11 @@ private fun CombatTile(
             }
             .border(if (highlighted || glow) 4.dp else 2.dp, borderColor, RoundedCornerShape(10.dp))
     ) {
-        Box(Modifier.fillMaxSize()) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(frameColor?.copy(alpha = 0.10f) ?: Color.Transparent)
+        ) {
             Column(
                 Modifier.fillMaxSize().padding(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -716,7 +723,12 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                             change.consume()
                             tilt += Offset(amount.x / 10f, amount.y / 10f)
                         }
-                    },
+                    }
+                    .border(
+                        4.dp,
+                        unit.frame?.let { Color(it.colorArgb) } ?: MaterialTheme.colorScheme.outline,
+                        RoundedCornerShape(22.dp)
+                    ),
                 shape = RoundedCornerShape(22.dp)
             ) {
                 Column(
@@ -728,7 +740,15 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                         Text("DANGER ${unit.card.danger}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.error)
                         Text("HEALTH ${unit.card.health}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                     }
-                    Box(
+                    unit.frame?.let { frame ->
+                        AnimalCardView(
+                            card = unit.card.copy(currentFrameId = frame.id),
+                            frame = frame,
+                            modifier = Modifier.fillMaxWidth().height(520.dp),
+                            compact = false,
+                            showStats = true
+                        )
+                    } ?: Box(
                         Modifier
                             .fillMaxWidth()
                             .height(240.dp)

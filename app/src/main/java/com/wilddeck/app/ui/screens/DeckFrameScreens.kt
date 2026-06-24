@@ -332,6 +332,7 @@ fun FrameStoreScreen(
     onBuy: (String) -> Unit,
     onCustomize: () -> Unit
 ) {
+    var selectedFrame by remember { mutableStateOf<CardFrame?>(null) }
     Box(Modifier.fillMaxSize()) {
         BubbleShopBackground()
     LazyColumn(
@@ -345,7 +346,11 @@ fun FrameStoreScreen(
         }
         items(frames, key = { it.id }) { frame ->
             val unlocked = frame.id in unlockedFrameIds
-            Card(Modifier.fillMaxWidth()) {
+            Card(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { selectedFrame = frame }
+            ) {
                 Row(
                     Modifier.fillMaxWidth().padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -358,6 +363,8 @@ fun FrameStoreScreen(
                     )
                     Column(Modifier.weight(1f)) {
                         Text(frame.name, fontWeight = FontWeight.Bold)
+                        Text("Tap for details", style = MaterialTheme.typography.bodySmall)
+                        if (false) {
                         Text(
                             "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
                             style = MaterialTheme.typography.bodySmall
@@ -369,13 +376,16 @@ fun FrameStoreScreen(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary
                         )
+                        }
                     }
+                    if (false) {
                     if (unlocked) {
                         Text("Owned", fontWeight = FontWeight.Bold)
                     } else {
                         Button(onClick = { onBuy(frame.id) }, enabled = points >= frameCost(frame.id)) {
                             Text("${frameCost(frame.id)} pts")
                         }
+                    }
                     }
                 }
             }
@@ -387,7 +397,97 @@ fun FrameStoreScreen(
         }
     }
     }
+    selectedFrame?.let { frame ->
+        FrameStoreDetailDialog(
+            frame = frame,
+            unlocked = frame.id in unlockedFrameIds,
+            points = points,
+            cost = frameCost(frame.id),
+            onBuy = { onBuy(frame.id) },
+            onDismiss = { selectedFrame = null }
+        )
+    }
 }
+
+@Composable
+private fun FrameStoreDetailDialog(
+    frame: CardFrame,
+    unlocked: Boolean,
+    points: Int,
+    cost: Int,
+    onBuy: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Box(
+                    Modifier
+                        .size(42.dp)
+                        .background(Color(frame.colorArgb), RoundedCornerShape(10.dp))
+                        .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
+                )
+                Text(frame.name, fontWeight = FontWeight.Black)
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
+                DetailBullet("Style", frame.borderStyle)
+                DetailBullet("Type", frame.type.displayName, keywordColor(frame.type.displayName))
+                DetailBullet("Multiplier", "x${formatMultiplier(frame.type.statMultiplier)} to frame-scaled values")
+                DetailBullet("Combat bonus", frame.combatBonus.description)
+                DetailBullet(
+                    "Effect",
+                    if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
+                    else frame.effect.name.lowercase().replace('_', ' ').replaceFirstChar(Char::uppercase)
+                )
+                DetailBullet("Status", if (unlocked) "Owned" else "Locked")
+                if (!unlocked) {
+                    DetailBullet("Cost", "$cost points")
+                }
+            }
+        },
+        confirmButton = {
+            if (unlocked) {
+                TextButton(onClick = onDismiss) { Text("Close") }
+            } else {
+                Button(
+                    onClick = {
+                        onBuy()
+                        onDismiss()
+                    },
+                    enabled = points >= cost
+                ) { Text("Buy for $cost pts") }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(if (unlocked) "Done" else "Cancel") }
+        }
+    )
+}
+
+@Composable
+private fun DetailBullet(label: String, value: String, valueColor: Color = MaterialTheme.colorScheme.onSurface) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+        Text("•", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
+        Column {
+            Text(label, fontWeight = FontWeight.Bold)
+            Text(value, color = valueColor, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+private fun keywordColor(keyword: String): Color =
+    when (keyword.lowercase()) {
+        "guardian" -> Color(0xFF2E7D32)
+        "support" -> Color(0xFF00838F)
+        "control" -> Color(0xFF6A1B9A)
+        "assault" -> Color(0xFFC62828)
+        "balanced" -> Color(0xFF1565C0)
+        "apex" -> Color(0xFFE65100)
+        else -> Color.Unspecified
+    }
 
 @Composable
 private fun BubbleShopBackground() {

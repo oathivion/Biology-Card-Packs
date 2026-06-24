@@ -425,3 +425,207 @@ Make the default frame black.
 Make the food-matching mini game award a card after 3 correct matches.
 Save the player’s inventory, decks, and frame choices locally.
 Test the game rules before polishing the UI.
+
+## Google Play Store Release Checklist
+
+This section turns the Google Play publishing process into project-specific action steps for WildDeck. Requirements can change, so re-check the linked official Google pages before submitting a production release.
+
+Official references:
+
+- Google Play Console app setup: https://support.google.com/googleplay/android-developer/answer/9859152
+- Target API level requirements: https://support.google.com/googleplay/android-developer/answer/11926878
+- Play App Signing: https://support.google.com/googleplay/android-developer/answer/9842756
+- Data safety form: https://support.google.com/googleplay/android-developer/answer/10787469
+- New personal account testing requirements: https://support.google.com/googleplay/android-developer/answer/14151465
+- Content ratings and target audience: https://support.google.com/googleplay/android-developer/answer/9859655
+- Prepare app for review: https://support.google.com/googleplay/android-developer/answer/9859455
+
+### 1. Prepare the developer account
+
+- Create or sign into a Google Play Console developer account.
+- Complete identity verification and account payments/tax setup if Google asks for it.
+- Decide whether the publisher is an individual or organization. If this is a personal developer account created after November 13, 2023, plan for Google Play's closed-testing requirement before production release.
+- Keep the Play Console account email, support email, recovery methods, and two-factor authentication current.
+
+### 2. Lock down the app identity
+
+- Confirm the package/application ID before first upload: `com.wilddeck.app`.
+- Treat the package name as permanent. Google Play package names cannot be reused after publishing.
+- Confirm app type/category in Play Console. WildDeck should probably be submitted as a game unless the educational collection side becomes the main purpose.
+- Choose the final public app name, short description, and full description.
+- Prepare a support email address. A contact email is required for the Play listing.
+
+### 3. Confirm technical Play requirements
+
+- Keep `targetSdk` at the current Google Play requirement or higher. This project currently targets API 35 in `app/build.gradle.kts`, which matches the Android 15 requirement that applies to new apps and updates starting August 31, 2025.
+- Keep `minSdk` at a realistic supported level. This project currently uses `minSdk = 26`.
+- Increment `versionCode` for every upload to Play Console. Current value is `1`; every release/update needs a higher number.
+- Update `versionName` for human-readable releases, such as `1.0.0`, `1.0.1`, etc.
+- Build a release Android App Bundle (`.aab`), not just a debug APK. Google Play uses Android App Bundles for modern app delivery.
+- Keep the app's compressed download size below Google Play's app bundle generated APK limit. Google lists 200 MB as the maximum compressed download size for APKs generated from app bundles.
+
+Project release build command:
+
+```powershell
+$env:JAVA_HOME='C:\Users\brian\.jdks\temurin-17.0.19'
+$env:ANDROID_HOME="$env:LOCALAPPDATA\Android\Sdk"
+.\gradlew.bat clean testDebugUnitTest bundleRelease
+```
+
+Expected artifact:
+
+```text
+app/build/outputs/bundle/release/app-release.aab
+```
+
+### 4. Set up release signing safely
+
+- Enroll in Play App Signing during the first Play Console release setup.
+- Create an upload key/keystore for signing the release app bundle.
+- Store the keystore outside the Git repository.
+- Store keystore passwords in a local/private Gradle properties file or environment variables, not in source control.
+- Back up the upload key securely. Google can reset an upload key, but losing signing material still slows releases.
+- Never commit `.jks`, `.keystore`, passwords, or generated signing config secrets.
+
+Suggested local-only files:
+
+```text
+keystore/wilddeck-upload-key.jks
+keystore.properties
+```
+
+Add these to `.gitignore` if release signing is added.
+
+### 5. Audit privacy and data collection
+
+Current project behavior appears local-first:
+
+- Player cards, decks, frames, and progress are saved locally.
+- No network permission was found in the current Android manifest.
+- No ad SDK, analytics SDK, account login, location access, contacts, camera, microphone, or payment system is currently apparent.
+
+Before submission, verify this again by checking:
+
+- `app/src/main/AndroidManifest.xml`
+- Gradle dependencies
+- Any future SDKs, analytics, crash reporting, ads, cloud save, or login features
+
+Then complete Google Play's Data safety form:
+
+- If the app still does not transmit user data off-device, declare that accurately.
+- If any SDK is added later, include that SDK's data collection/sharing in the Data safety form.
+- If the app collects or shares user data in the future, disclose the data types, purposes, whether the data is encrypted in transit, whether collection is required or optional, and whether users can request deletion.
+- Keep the Data safety form updated every time app behavior or SDKs change.
+
+### 6. Create a privacy policy
+
+Even if the app collects no personal data, publish a simple privacy policy URL before release. This is especially important because WildDeck may appeal to younger users and may later add analytics, cloud saves, ads, or accounts.
+
+The privacy policy should state:
+
+- What data the app stores locally.
+- Whether any data leaves the device.
+- Whether the app uses ads, analytics, crash reporting, or third-party SDKs.
+- Whether the app is intended for children or a general audience.
+- How users can contact support.
+- How users can request data deletion if cloud/account features are ever added.
+
+Host the policy somewhere stable, such as a personal website, GitHub Pages, or another public URL, and add it in Play Console.
+
+### 7. Complete Play Console app content declarations
+
+In Play Console, go through the App content section and complete every declaration:
+
+- Data safety
+- Privacy policy
+- Ads: currently answer "No" if no ads or ad SDKs are added.
+- App access: if the app does not require login, say all features are available without special access. If a login or tester code is added later, provide review instructions.
+- Content rating questionnaire: answer based on actual content. WildDeck includes animal combat/gameplay, so describe fantasy/card battle content honestly even if it is non-graphic.
+- Target audience and content: choose the intended age group carefully. Because this is animal/trivia content, decide whether it is for all ages, teens, or a children-focused audience. If selecting children under 13, expect stricter Families policy obligations.
+- News, financial features, health features, government features, permissions, and other declarations if Play Console shows them.
+
+### 8. Prepare store listing assets
+
+Create production-quality store assets:
+
+- App icon: 512 x 512 PNG.
+- Feature graphic: 1024 x 500 PNG.
+- Phone screenshots: at least 2, showing the main page, card collection, deck builder, Wild Run, frame store, and learn-more page.
+- Optional promo video.
+- Short description: maximum 80 characters.
+- Full description: maximum 4000 characters.
+- Category and tags.
+- Support email.
+- Optional support website.
+
+Suggested listing angle:
+
+- WildDeck is an animal card collection and trivia game.
+- Players learn real-world animal facts, unlock cards, build decks, equip frames, and play Wild Run battles.
+- Avoid unsupported claims like "scientifically complete" unless the content is fully reviewed.
+
+### 9. Run local quality checks before upload
+
+Before every Play upload:
+
+```powershell
+$env:JAVA_HOME='C:\Users\brian\.jdks\temurin-17.0.19'
+$env:ANDROID_HOME="$env:LOCALAPPDATA\Android\Sdk"
+.\gradlew.bat testDebugUnitTest assembleDebug compileDebugAndroidTestKotlin bundleRelease
+```
+
+Manual smoke test checklist:
+
+- Fresh install opens to the main page.
+- Swipe navigation works across all 5 home pages.
+- Mini game spends/uses points correctly.
+- Unlocking cards works and does not repeat owned animals.
+- Collection shows locked/unlocked cards correctly.
+- Deck page can create all 5 decks from plus slots.
+- Cards can be added to and removed from decks.
+- Wild Run can start from a built deck.
+- Frame store works and frame prices are correct.
+- Learn More page locks trivia until the animal is unlocked.
+- App still works after closing and reopening.
+- No debug-only text, placeholder assets, or broken images appear.
+
+### 10. Create Play Console app and upload internal test
+
+- In Play Console, select Create app.
+- Enter app name, default language, app/game type, free/paid status, support email, policy declarations, and Play App Signing terms.
+- Upload the first signed release `.aab` to an internal testing track first.
+- Add internal testers by email or Google Group.
+- Install from the Play testing link and verify the Play-delivered build, not just the Android Studio build.
+- Fix any pre-review warnings from Play Console.
+
+### 11. Closed testing and production access
+
+If using a personal developer account created after November 13, 2023:
+
+- Create a closed testing track after app setup is complete.
+- Add at least 12 testers.
+- Make sure at least 12 testers opt in and remain opted in continuously for at least 14 days.
+- Gather feedback and fix issues during the closed test.
+- Apply for production access in Play Console after the requirement is met.
+- Be ready to answer questions about the app, test results, and production readiness.
+
+If using an organization account or an older account, still use internal/closed testing before production because it catches Play-specific problems early.
+
+### 12. Submit production release
+
+- Create a production release using the approved `.aab`.
+- Add release notes.
+- Review Play Console policy warnings, pre-launch report results, device compatibility, Android vitals, and app bundle explorer output.
+- Use managed publishing if you want review approval and public release to happen separately.
+- Consider a staged rollout instead of immediately releasing to 100% of users.
+- After launch, monitor crashes, ANRs, reviews, ratings, and user feedback.
+
+### 13. Ongoing maintenance after launch
+
+- Increment `versionCode` for every update.
+- Keep target API updated yearly.
+- Re-run the Data safety audit whenever adding SDKs or features.
+- Keep screenshots and descriptions accurate as the UI changes.
+- Watch Play Console policy status and Android vitals.
+- Test updates through internal testing before production.
+- Keep animal facts, image rights, and commercial-use asset records organized.

@@ -337,12 +337,13 @@ private fun CollectionListCard(
                 frame = framesById[card.currentFrameId] ?: framesById.values.first(),
                 modifier = Modifier.size(width = 112.dp, height = 160.dp),
                 compact = locked,
+                showStats = false,
                 onClick = { onOpenCard(card.id) }
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(if (locked) "Locked: ${card.name}" else card.name, fontWeight = FontWeight.Black)
                 Text("${card.species} · ${card.rarity}", style = MaterialTheme.typography.bodySmall)
-                Text("H${card.health} D${card.danger} · ${card.habitat}", style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                Text(card.habitat, style = MaterialTheme.typography.bodySmall, maxLines = 2)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { onOpenCard(card.id) }, modifier = Modifier.weight(1f)) {
                         Text("Details")
@@ -506,6 +507,7 @@ fun CollectionScreen(
                     frame = framesById.getValue(card.currentFrameId),
                     modifier = Modifier.fillMaxWidth().height(350.dp),
                     compact = false,
+                    showStats = false,
                     onClick = { onOpenCard(card.id) }
                 )
                 Row(

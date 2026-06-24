@@ -59,6 +59,7 @@ fun AnimalCardView(
     frame: CardFrame,
     modifier: Modifier = Modifier,
     compact: Boolean = false,
+    showStats: Boolean = true,
     onClick: (() -> Unit)? = null
 ) {
     val frameColor = Color(frame.colorArgb)
@@ -86,20 +87,24 @@ fun AnimalCardView(
             ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = if (showStats) Arrangement.SpaceBetween else Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                StatBadge("DANGER", card.danger, Color(0xFF9B342E), "danger_${card.id}", compact)
+                if (showStats) {
+                    StatBadge("DANGER", card.danger, Color(0xFF9B342E), "danger_${card.id}", compact)
+                }
                 Text(
                     text = card.name,
                     style = if (compact) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.weight(1f).padding(horizontal = 8.dp),
+                    modifier = if (showStats) Modifier.weight(1f).padding(horizontal = 8.dp) else Modifier.fillMaxWidth(),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                StatBadge("HEALTH", card.health, Color(0xFF286B45), "health_${card.id}", compact)
+                if (showStats) {
+                    StatBadge("HEALTH", card.health, Color(0xFF286B45), "health_${card.id}", compact)
+                }
             }
             Spacer(Modifier.height(8.dp))
             Box(

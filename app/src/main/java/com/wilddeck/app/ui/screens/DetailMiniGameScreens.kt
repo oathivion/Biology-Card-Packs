@@ -135,7 +135,7 @@ fun MiniGameScreen(
             card = session.targetCard,
             frame = frame,
             modifier = Modifier.fillMaxWidth().height(430.dp),
-            compact = !session.isRewarded
+            compact = false
         )
         if (session.isRewarded) {
             Text(

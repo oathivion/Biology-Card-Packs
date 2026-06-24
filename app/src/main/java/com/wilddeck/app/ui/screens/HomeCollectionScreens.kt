@@ -336,7 +336,7 @@ private fun CollectionListCard(
                 card = card,
                 frame = framesById[card.currentFrameId] ?: framesById.values.first(),
                 modifier = Modifier.size(width = 112.dp, height = 160.dp),
-                compact = true,
+                compact = locked,
                 onClick = { onOpenCard(card.id) }
             )
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -505,7 +505,7 @@ fun CollectionScreen(
                     card = card,
                     frame = framesById.getValue(card.currentFrameId),
                     modifier = Modifier.fillMaxWidth().height(350.dp),
-                    compact = true,
+                    compact = false,
                     onClick = { onOpenCard(card.id) }
                 )
                 Row(

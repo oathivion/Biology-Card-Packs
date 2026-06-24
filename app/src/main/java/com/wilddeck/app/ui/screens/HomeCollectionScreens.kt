@@ -267,7 +267,7 @@ private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>) {
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    AnimalPhoto(card = card, modifier = Modifier.fillMaxSize(), fallbackFontSize = MaterialTheme.typography.headlineSmall.fontSize)
+                    Text(card.imageEmoji, style = MaterialTheme.typography.headlineSmall)
                 }
             }
         }

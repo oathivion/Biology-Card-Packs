@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -82,6 +83,7 @@ import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
 import com.wilddeck.app.model.Deck
+import com.wilddeck.app.ui.components.AnimalPhoto
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
 
@@ -658,7 +660,20 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                         Text("DANGER ${unit.card.danger}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.error)
                         Text("HEALTH ${unit.card.health}", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
                     }
-                    Text(unit.card.imageEmoji, fontSize = 108.sp)
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(18.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AnimalPhoto(
+                            card = unit.card,
+                            modifier = Modifier.fillMaxSize(),
+                            fallbackFontSize = 108.sp
+                        )
+                    }
                     Text(unit.card.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
                     Text("${unit.card.combatRole.name.lowercase().replaceFirstChar(Char::uppercase)} · " +
                         "Combat HP ${unit.currentHealth}/${unit.maxHealth} · Damage ${unit.damage}",

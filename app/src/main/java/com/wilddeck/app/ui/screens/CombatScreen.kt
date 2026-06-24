@@ -111,18 +111,16 @@ fun CombatScreen(
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit
 ) {
-    AnimatedContent(targetState = session, label = "combat-mode") { combat ->
-        if (combat == null) {
-            CombatLobby(
-                points, decks, ownedCards, lockedFrames, reducedMotion, soundEnabled, hapticsEnabled,
-                frameCost, onStart, onUnlockFrame, onReducedMotion, onSound, onHaptics
-            )
-        } else {
-            CombatBoard(
-                combat, effects, effectSequence, points, reducedMotion, soundEnabled, hapticsEnabled,
-                onAction, onNextRound, onEndRun
-            )
-        }
+    if (session == null) {
+        CombatLobby(
+            points, decks, ownedCards, lockedFrames, reducedMotion, soundEnabled, hapticsEnabled,
+            frameCost, onStart, onUnlockFrame, onReducedMotion, onSound, onHaptics
+        )
+    } else {
+        CombatBoard(
+            session, effects, effectSequence, points, reducedMotion, soundEnabled, hapticsEnabled,
+            onAction, onNextRound, onEndRun
+        )
     }
 }
 

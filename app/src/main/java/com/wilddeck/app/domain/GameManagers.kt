@@ -178,7 +178,7 @@ class MiniGameManager(
     }
 
     fun createQuestions(target: AnimalCard): List<TriviaQuestion> =
-        requireNotNull(funFactBank[target.id]) { "Missing trivia facts for ${target.id}." }
+        (funFactBank[target.id] ?: generatedFacts(target))
             .mapIndexed { index, fact ->
                 TriviaQuestion(
                     id = "${target.id}_${fact.difficulty.name.lowercase()}_$index",
@@ -188,6 +188,79 @@ class MiniGameManager(
                     difficulty = fact.difficulty
                 )
             }
+
+    private fun generatedFacts(target: AnimalCard): List<Fact> = listOf(
+        easy(
+            "Which real-world fact is true about ${target.name}?",
+            target.description,
+            "It is a plant that makes all of its food from sunlight.",
+            "It is a machine built by humans rather than an animal.",
+            "It naturally lives only inside active volcanoes."
+        ),
+        easy(
+            "Where would ${target.name} most likely be found in the wild?",
+            target.habitat,
+            "A city subway tunnel",
+            "The surface of the Moon",
+            "Inside a sealed computer"
+        ),
+        easy(
+            "What does ${target.name} commonly eat?",
+            target.food,
+            "Plastic",
+            "Concrete",
+            "Sunlight only"
+        ),
+        medium(
+            "Which adaptation helps ${target.name} survive?",
+            target.healthExplanation,
+            "It survives by turning into a rock during the day.",
+            "It avoids all predators by becoming invisible forever.",
+            "It has no need for food, water, or oxygen."
+        ),
+        medium(
+            "Which fact explains why ${target.name} can be dangerous or defensive?",
+            target.dangerExplanation,
+            "It uses a wooden tool made in factories.",
+            "It wins fights by changing into a different species.",
+            "It depends on metal armor grown from tree roots."
+        ),
+        medium(
+            "Which special behavior or ability fits ${target.name}?",
+            target.ability.description,
+            "It reads maps and plans roads for other animals.",
+            "It spins glass from sand to trap prey.",
+            "It stores electricity in feathers for winter."
+        ),
+        medium(
+            "Which animal group best describes ${target.name}?",
+            target.species,
+            "Flowering plant",
+            "Mineral crystal",
+            "Fungus"
+        ),
+        hard(
+            "Which detailed statement best matches ${target.name}'s ecology?",
+            "${target.name} is connected to ${target.habitat.lowercase()} food webs through its diet of ${target.food.lowercase()}.",
+            "${target.name} is disconnected from food webs because it never eats or gets eaten.",
+            "${target.name} only survives in habitats made entirely by people.",
+            "${target.name} gets all energy from moonlight instead of food."
+        ),
+        hard(
+            "Which survival tradeoff is most accurate for ${target.name}?",
+            target.healthExplanation,
+            target.dangerExplanation,
+            target.description,
+            target.ability.description
+        ),
+        hard(
+            "Which combat ability was based on a real trait of ${target.name}?",
+            target.ability.description,
+            target.description,
+            target.healthExplanation,
+            target.dangerExplanation
+        )
+    )
 
     private data class Fact(
         val difficulty: TriviaDifficulty,

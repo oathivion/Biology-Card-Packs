@@ -114,7 +114,7 @@ object SampleData {
             "Food scraps", "Warm open ocean and reefs", CardRarity.UNCOMMON,
             "A flexible body and moderate size provide limited durability.",
             "Remoras are not aggressive and present little danger to people.")
-    ).map { card -> card.copy(ability = abilities.getValue(card.id)) }
+    ).map { card -> card.copy(ability = abilities.getValue(card.id)) } + ExpandedAnimalData.cards
 
     val frames = listOf(
         CardFrame("black", "Black Border", "Classic", 0xFF171717, true,
@@ -218,5 +218,5 @@ object SampleData {
         "pistol_shrimp" to "Pistol shrimp are small, but they matter to people through science and reef ecology. Their snapping claw is a natural example of extreme speed, sound production, and cavitation, which makes them fascinating for physics and biology education. In reef and seabed habitats, their burrowing and partnerships with gobies also help create shelter and structure used by other small marine animals.",
         "goby" to "Watchman gobies help people understand cooperation in nature because their partnership with pistol shrimp is easy to observe in reefs and aquariums. They are part of the small-animal communities that keep reef sand habitats active and biodiverse. For humans, gobies also highlight why protecting reefs means protecting more than colorful corals; the small burrow-builders and lookout fish are part of the system too.",
         "remora" to "Remoras have long interested people because of their unusual suction disc and their habit of riding sharks, rays, turtles, and whales. They usually do little harm to hosts, making them a clear example of commensalism for students and divers. Their lifestyle also reminds people that large marine animals act like moving habitats, carrying smaller species through the ocean and connecting food opportunities."
-    )
+    ) + ExpandedAnimalData.humanRelationshipNotes
 }

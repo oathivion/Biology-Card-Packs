@@ -332,14 +332,17 @@ private fun CollectionListCard(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AnimalCardView(
-                card = card,
-                frame = framesById[card.currentFrameId] ?: framesById.values.first(),
-                modifier = Modifier.size(width = 112.dp, height = 160.dp),
-                compact = locked,
-                showStats = false,
-                onClick = { onOpenCard(card.id) }
-            )
+            val frame = framesById[card.currentFrameId] ?: framesById.values.first()
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                shape = RoundedCornerShape(14.dp),
+                modifier = Modifier
+                    .size(width = 112.dp, height = 160.dp)
+                    .border(3.dp, Color(frame.colorArgb), RoundedCornerShape(14.dp))
+                    .clickable { onOpenCard(card.id) }
+            ) {
+                AnimalPhoto(card = card, modifier = Modifier.fillMaxSize())
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(if (locked) "Locked: ${card.name}" else card.name, fontWeight = FontWeight.Black)
                 Text("${card.species} · ${card.rarity}", style = MaterialTheme.typography.bodySmall)

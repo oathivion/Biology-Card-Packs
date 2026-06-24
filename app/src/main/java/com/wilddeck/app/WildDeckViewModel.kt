@@ -107,9 +107,10 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             .firstOrNull { it.id == deckId && it.cardIds.isNotEmpty() }
             ?.cardIds
             ?.mapNotNull(catalog::get)
-            ?.map { it.withSelectedFrame() }
             .orEmpty()
-        val cards = selectedDeckCards.ifEmpty { inventory.getAll(catalog).take(5).map { it.withSelectedFrame() } }
+        val cards = selectedDeckCards
+            .ifEmpty { inventory.getAll(catalog).take(5) }
+            .map { it.withBattleFrame() }
         if (cards.isEmpty()) {
             showMessage("Earn or unlock a creature before starting combat.")
             return
@@ -275,6 +276,12 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
 
     private fun AnimalCard.withSelectedFrame(): AnimalCard =
         copy(currentFrameId = frameManager.selectedFrameId(id))
+
+    private fun AnimalCard.withBattleFrame(): AnimalCard {
+        val selectedFrameId = frameManager.selectedFrameId(id)
+        val battleFrameId = if (frameManager.isUnlocked(selectedFrameId)) selectedFrameId else defaultFrameId
+        return copy(currentFrameId = battleFrameId)
+    }
 
     private fun formatMultiplier(value: Double): String =
         if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)

@@ -32,7 +32,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -140,10 +142,15 @@ private fun CombatLobby(
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit
 ) {
+    val cardsById = ownedCards.associateBy { it.id }
     Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        Column(
+            Modifier.weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
         Text("Wild Run", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
         Text("Drag attackers onto enemies and supports onto allies. Clear a round to earn 1 point.")
         Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp)) {
@@ -155,19 +162,28 @@ private fun CombatLobby(
                 textAlign = TextAlign.Center
             )
         }
-        Text("Choose a team", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        decks.filter { it.cardIds.isNotEmpty() }.forEach { deck ->
-            PressScaleButton(onClick = { onStart(deck.id) }) {
+        Text("Choose a deck", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        if (decks.isEmpty()) {
+            Text("No decks have been created yet. Build one on the Decks page, or use the fallback team below.")
+        } else {
+            decks.forEach { deck ->
+            run {
+                CombatDeckChoiceCard(deck, cardsById, onStart)
+                return@run
                 Text("${deck.name} · ${deck.cardIds.size} cards · ×${formatCombatMultiplier(deck.symbiosisMultiplier)}")
             }
         }
+        }
+        if (false) {
         OutlinedButton(
             onClick = { onStart(null) },
             enabled = ownedCards.isNotEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) { Text("Use first ${minOf(5, ownedCards.size)} collected creatures") }
         if (ownedCards.isEmpty()) Text("Earn your first creature through Animal Trivia to begin.")
+        }
 
+        if (false) {
         Text("Buy frames", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         lockedFrames.forEach { frame ->
             Card(Modifier.fillMaxWidth()) {
@@ -188,11 +204,80 @@ private fun CombatLobby(
             }
         }
         if (lockedFrames.isEmpty()) Text("Every frame has been unlocked.")
+        }
 
         Text("Effects & accessibility", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         SettingToggle("Sound effects", soundEnabled, onSound)
         SettingToggle("Haptic feedback", hapticsEnabled, onHaptics)
         SettingToggle("Reduced motion", reducedMotion, onReducedMotion)
+        }
+        OutlinedButton(
+            onClick = { onStart(null) },
+            enabled = ownedCards.isNotEmpty(),
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("Use first ${minOf(5, ownedCards.size)} collected creatures") }
+        if (ownedCards.isEmpty()) Text("Earn your first creature through Animal Trivia to begin.")
+    }
+}
+
+@Composable
+private fun CombatDeckChoiceCard(
+    deck: Deck,
+    cardsById: Map<String, AnimalCard>,
+    onStart: (String?) -> Unit
+) {
+    val deckCards = deck.cardIds.take(5).mapNotNull { cardsById[it] }
+    PressScaleButton(onClick = { if (deckCards.isNotEmpty()) onStart(deck.id) }) {
+        Card(Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.fillMaxWidth().padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                CombatDeckIconStack(deckCards)
+                Column(Modifier.weight(1f)) {
+                    Text(deck.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text("${deck.cardIds.size}/5 cards · Score ${deck.score} · ×${formatCombatMultiplier(deck.symbiosisMultiplier)}")
+                    if (deckCards.isEmpty()) {
+                        Text("Empty deck slot", style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text(deckCards.joinToString(" ") { it.imageEmoji }, style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                Text(if (deckCards.isEmpty()) "+" else "Run", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CombatDeckIconStack(cards: List<AnimalCard>) {
+    Box(Modifier.size(76.dp), contentAlignment = Alignment.Center) {
+        Surface(
+            Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 2.dp
+        ) {}
+        if (cards.isEmpty()) {
+            Text("+", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black)
+        } else {
+            cards.take(5).forEachIndexed { index, card ->
+                Surface(
+                    Modifier
+                        .size(34.dp)
+                        .offset(x = ((index % 3) * 14).dp - 14.dp, y = (index / 3 * 22).dp - 12.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp)),
+                    color = Color.White,
+                    shape = RoundedCornerShape(10.dp),
+                    shadowElevation = 2.dp
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(card.imageEmoji, fontSize = 18.sp)
+                    }
+                }
+            }
+        }
     }
 }
 

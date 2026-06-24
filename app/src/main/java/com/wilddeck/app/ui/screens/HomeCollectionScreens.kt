@@ -66,7 +66,9 @@ fun HomeScreen(
     onPlay: () -> Unit,
     onCombat: () -> Unit,
     onOpenCard: (String) -> Unit,
+    onCreateDeck: (String) -> Unit,
     onAddToDeck: (String, String) -> Unit,
+    onRemoveFromDeck: (String, String) -> Unit,
     onBuyFrame: (String) -> Unit,
     onCustomizeFrames: () -> Unit
 ) {
@@ -86,7 +88,7 @@ fun HomeScreen(
                     onBuy = onBuyFrame,
                     onCustomize = onCustomizeFrames
                 )
-                1 -> DeckSlotsPage(decks, ownedCards)
+                1 -> DeckSlotsPage(decks, ownedCards, onCreateDeck, onAddToDeck, onRemoveFromDeck)
                 2 -> PlayLanding(ownedCount, deckCount, progressionPoints, onPlay, onCombat)
                 3 -> CollectionPagerPage(catalog, ownedCards, framesById, decks, onPlay, onOpenCard, onAddToDeck)
                 else -> LearnMorePage(catalog, ownedCards, learningTriviaByCardId, humanRelationshipNotes)
@@ -203,27 +205,44 @@ private fun PlaceholderHub() {
 }
 
 @Composable
-private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
+private fun DeckSlotsPage(
+    decks: List<Deck>,
+    ownedCards: List<AnimalCard>,
+    onCreateDeck: (String) -> Unit,
+    onAddToDeck: (String, String) -> Unit,
+    onRemoveFromDeck: (String, String) -> Unit
+) {
     Column(
         Modifier.fillMaxSize().padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         repeat(Deck.MAX_CARDS) { index ->
             val deck = decks.getOrNull(index)
-            Card(Modifier.fillMaxWidth().weight(1f)) {
+            Card(
+                Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .clickable(enabled = deck == null) { onCreateDeck("Field Deck ${index + 1}") }
+            ) {
                 Row(
                     Modifier.fillMaxSize().padding(10.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    DeckIconStack(deck, ownedCards)
+                    DeckIconStack(deck, ownedCards) {
+                        if (deck == null) onCreateDeck("Field Deck ${index + 1}")
+                    }
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(deck?.name ?: "Open Deck Slot ${index + 1}", fontWeight = FontWeight.Black)
                             Text("${deck?.cardIds?.size ?: 0}/5")
                         }
                         if (deck == null || deck.cardIds.isEmpty()) {
-                            Text("Tap deck builder to add cards.", style = MaterialTheme.typography.bodySmall)
+                            Text(
+                                if (deck == null) "Tap the plus to create this deck."
+                                else "Use Add card to build this deck.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         } else {
                             Text(
                                 deck.cardIds.take(5)
@@ -235,6 +254,9 @@ private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
                             Text("Score ${deck.score} · ×${formatHomeMultiplier(deck.symbiosisMultiplier)}",
                                 style = MaterialTheme.typography.labelSmall)
                         }
+                        if (deck != null) {
+                            DeckSlotEditor(deck, ownedCards, onAddToDeck, onRemoveFromDeck)
+                        }
                     }
                 }
             }
@@ -243,13 +265,14 @@ private fun DeckSlotsPage(decks: List<Deck>, ownedCards: List<AnimalCard>) {
 }
 
 @Composable
-private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>) {
+private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>, onClick: () -> Unit = {}) {
     val cards = deck?.cardIds.orEmpty().take(5).mapNotNull { id -> ownedCards.firstOrNull { it.id == id } }
     Box(
         Modifier
             .size(width = 86.dp, height = 96.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(12.dp))
-            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp)),
+            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+            .clickable(enabled = deck == null) { onClick() },
         contentAlignment = Alignment.Center
     ) {
         if (cards.isEmpty()) {
@@ -267,6 +290,51 @@ private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>) {
                 ) {
                     Text(card.imageEmoji, style = MaterialTheme.typography.headlineSmall)
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DeckSlotEditor(
+    deck: Deck,
+    ownedCards: List<AnimalCard>,
+    onAddToDeck: (String, String) -> Unit,
+    onRemoveFromDeck: (String, String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val availableCards = ownedCards
+        .filterNot { it.id in deck.cardIds }
+        .sortedBy { it.name }
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                enabled = deck.cardIds.size < Deck.MAX_CARDS && availableCards.isNotEmpty()
+            ) { Text("Add card") }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                if (availableCards.isEmpty()) {
+                    DropdownMenuItem(text = { Text("No available cards") }, onClick = { expanded = false })
+                } else {
+                    availableCards.forEach { card ->
+                        DropdownMenuItem(
+                            text = { Text("${card.imageEmoji} ${card.name}") },
+                            onClick = {
+                                expanded = false
+                                onAddToDeck(deck.id, card.id)
+                            }
+                        )
+                    }
+                }
+            }
+        }
+        if (deck.cardIds.isNotEmpty()) {
+            OutlinedButton(onClick = { onRemoveFromDeck(deck.id, deck.cardIds.last()) }) {
+                Text("Remove last")
             }
         }
     }

@@ -142,7 +142,9 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onPlay = { navController.navigate(Routes.GAME) },
                     onCombat = { navController.navigate(Routes.COMBAT) },
                     onOpenCard = { navController.navigate(Routes.detail(it)) },
+                    onCreateDeck = viewModel::createDeck,
                     onAddToDeck = viewModel::addCardToDeck,
+                    onRemoveFromDeck = viewModel::removeCardFromDeck,
                     onBuyFrame = viewModel::unlockFrame,
                     onCustomizeFrames = { navController.navigate(Routes.frames()) }
                 )

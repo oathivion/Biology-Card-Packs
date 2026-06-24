@@ -4,6 +4,7 @@ import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.FrameCombatBonus
+import com.wilddeck.app.model.FrameEffect
 import com.wilddeck.app.model.FrameType
 import com.wilddeck.app.model.CombatActionResult
 import com.wilddeck.app.model.CombatEffect
@@ -83,8 +84,13 @@ class CombatManager(
         require(session.isRoundCleared) { "The current round is not cleared." }
         val nextRound = session.round + 1
         val refreshedPlayers = session.playerUnits.filter { it.isAlive }.map {
+            val scales = it.frame?.effect == FrameEffect.ROUND_GROWTH
+            val healthGrowth = if (scales) 1 else 0
+            val damageGrowth = if (scales && it.card.combatRole != CombatRole.SUPPORT) 1 else 0
             it.copy(
-                currentHealth = (it.currentHealth + 1).coerceAtMost(it.maxHealth),
+                maxHealth = it.maxHealth + healthGrowth,
+                currentHealth = (it.currentHealth + 1 + healthGrowth).coerceAtMost(it.maxHealth + healthGrowth),
+                damage = it.damage + damageGrowth,
                 hasActed = false,
                 isTaunting = false,
                 isStunned = false

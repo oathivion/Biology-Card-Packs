@@ -8,11 +8,11 @@ import org.junit.Test
 
 class FrameEffectsTest {
     @Test
-    fun tenNewFrames_haveTenDifferentAnimatedEffects() {
+    fun animatedFrames_haveDifferentAnimatedEffects() {
         val animatedFrames = SampleData.frames.filter { it.effect != FrameEffect.NONE }
 
-        assertEquals(10, animatedFrames.size)
-        assertEquals(10, animatedFrames.map { it.effect }.toSet().size)
+        assertEquals(24, animatedFrames.size)
+        assertEquals(24, animatedFrames.map { it.effect }.toSet().size)
         assertTrue(animatedFrames.none { it.isUnlockedByDefault })
         assertTrue(animatedFrames.all { it.type != FrameType.BALANCED })
         assertTrue(animatedFrames.all { it.combatBonus.description != "No combat bonus." })

@@ -325,6 +325,101 @@ private fun AnimatedFrameEffect(effect: FrameEffect, frameColor: Color, modifier
                     drawCircle(Color.White.copy(alpha = twinkle), 1.2f + index % 3, Offset(x, y))
                 }
             }
+            FrameEffect.ROUND_GROWTH -> {
+                val pulse = 0.25f + 0.45f * sin(progress * 6.28f).absoluteValue
+                drawRect(Color(0xFFFFFF7A).copy(alpha = pulse * 0.45f))
+                drawRoundRect(Color(0xFFFFFFA8).copy(alpha = pulse), style = Stroke(8f), cornerRadius = CornerRadius(22f))
+            }
+            FrameEffect.WHALE_SONG, FrameEffect.DOLPHIN_ECHO -> repeat(5) { index ->
+                val phase = (progress + index / 5f) % 1f
+                drawCircle(
+                    Color(0xFFBFEFFF).copy(alpha = 1f - phase),
+                    size.minDimension * phase * 0.65f,
+                    Offset(size.width / 2f, size.height / 2f),
+                    style = Stroke(2f)
+                )
+            }
+            FrameEffect.TENTACLE -> repeat(5) { index ->
+                val y = size.height * (index + 1) / 6f
+                val path = Path().apply {
+                    moveTo(0f, y)
+                    cubicTo(size.width * 0.25f, y - 35f, size.width * 0.35f, y + 35f, size.width * (0.55f + progress * 0.25f), y)
+                }
+                drawPath(path, Color(0xFFC19AF0).copy(alpha = 0.34f), style = Stroke(5f, cap = StrokeCap.Round))
+            }
+            FrameEffect.TURTLE_SHELL -> {
+                repeat(4) { index ->
+                    val x = size.width * (index + 1) / 5f
+                    drawLine(Color(0xFF9ACB82).copy(alpha = 0.42f), Offset(x, 0f), Offset(x, size.height), 2f)
+                }
+                repeat(5) { index ->
+                    val y = size.height * (index + 1) / 6f
+                    drawLine(Color(0xFF9ACB82).copy(alpha = 0.35f), Offset(0f, y), Offset(size.width, y), 2f)
+                }
+            }
+            FrameEffect.MANTA_CURRENT -> repeat(8) { index ->
+                val y = size.height * ((progress + index / 8f) % 1f)
+                drawLine(Color(0xFFA9F3FF).copy(alpha = 0.28f), Offset(0f, y), Offset(size.width, y + sin(progress * 6.28f) * 18f), 3f)
+            }
+            FrameEffect.JUNGLE_VINES -> repeat(6) { index ->
+                val x = size.width * (index + 1) / 7f
+                val path = Path().apply {
+                    moveTo(x, 0f)
+                    cubicTo(x - 24f, size.height * 0.25f, x + 24f, size.height * 0.55f, x, size.height)
+                }
+                drawPath(path, Color(0xFF64B56A).copy(alpha = 0.36f), style = Stroke(4f, cap = StrokeCap.Round))
+            }
+            FrameEffect.POISON_GLOW -> {
+                val alpha = 0.18f + 0.22f * sin(progress * 6.28f).absoluteValue
+                drawRect(Color(0xFF2DFF74).copy(alpha = alpha))
+                repeat(10) { index ->
+                    drawCircle(Color(0xFFFFE85A).copy(alpha = 0.38f), 4f + index % 4, Offset(size.width * ((index * 37 % 91) / 91f), size.height * ((index * 53 % 89) / 89f)))
+                }
+            }
+            FrameEffect.APE_STRENGTH -> repeat(4) { index ->
+                val inset = 10f + index * 20f + progress * 15f
+                drawRoundRect(
+                    Color(0xFFE2E2E2).copy(alpha = 0.18f),
+                    topLeft = Offset(inset, inset),
+                    size = androidx.compose.ui.geometry.Size(size.width - inset * 2, size.height - inset * 2),
+                    style = Stroke(5f),
+                    cornerRadius = CornerRadius(18f)
+                )
+            }
+            FrameEffect.ARCTIC_AURA -> {
+                drawRect(Color(0xFFDDFBFF).copy(alpha = 0.16f))
+                repeat(12) { index ->
+                    val x = size.width * ((index * 41 % 97) / 97f)
+                    val y = size.height * ((progress + index / 12f) % 1f)
+                    drawCircle(Color.White.copy(alpha = 0.5f), 2f + index % 3, Offset(x, y))
+                }
+            }
+            FrameEffect.TUSK_GUARD -> {
+                drawArc(Color(0xFFFFF2D0).copy(alpha = 0.46f), 210f, 110f, false, style = Stroke(7f, cap = StrokeCap.Round))
+                drawArc(Color(0xFFFFF2D0).copy(alpha = 0.46f), -30f, 110f, false, style = Stroke(7f, cap = StrokeCap.Round))
+            }
+            FrameEffect.SNOW_TRACKS -> repeat(8) { index ->
+                val phase = (progress + index / 8f) % 1f
+                val x = size.width * ((index * 29 % 83) / 83f)
+                val y = size.height * phase
+                drawOval(Color.White.copy(alpha = 0.55f), topLeft = Offset(x, y), size = androidx.compose.ui.geometry.Size(7f, 13f))
+            }
+            FrameEffect.DESERT_HEAT -> repeat(7) { index ->
+                val x = size.width * (index + 1) / 8f
+                val path = Path().apply {
+                    moveTo(x, size.height)
+                    cubicTo(x - 16f, size.height * 0.7f, x + 16f, size.height * 0.35f, x + sin(progress * 6.28f) * 12f, 0f)
+                }
+                drawPath(path, Color(0xFFFFD17A).copy(alpha = 0.3f), style = Stroke(3f, cap = StrokeCap.Round))
+            }
+            FrameEffect.SCORPION_STING -> {
+                val path = Path().apply {
+                    moveTo(size.width * 0.85f, size.height)
+                    cubicTo(size.width * 0.55f, size.height * 0.7f, size.width * 0.88f, size.height * 0.45f, size.width * (0.72f + progress * 0.18f), size.height * 0.2f)
+                    lineTo(size.width * 0.79f, size.height * 0.25f)
+                }
+                drawPath(path, Color(0xFFFF9A4A).copy(alpha = 0.58f), style = Stroke(5f, cap = StrokeCap.Round))
+            }
             FrameEffect.NONE -> Unit
         }
     }

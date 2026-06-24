@@ -44,6 +44,21 @@ class CombatManagerTest {
     }
 
     @Test
+    fun evolutionFrameScalesSurvivorEachRound() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }.copy(currentFrameId = "evolution")
+        val manager = CombatManager(SampleData.animalCards, random = Random(11), frames = SampleData.frames)
+        val session = requireNotNull(manager.startRun(listOf(lion), 1.0))
+        val unit = session.playerUnits.single()
+
+        val next = manager.nextRound(session.copy(enemyUnits = emptyList()))
+        val scaled = next.playerUnits.single()
+
+        assertEquals(unit.maxHealth + 1, scaled.maxHealth)
+        assertEquals(unit.currentHealth + 1, scaled.currentHealth)
+        assertEquals(unit.damage + 1, scaled.damage)
+    }
+
+    @Test
     fun enemiesGainRoundScalingFrameAfterRoundTenWithFloorRounding() {
         val lion = SampleData.animalCards.first { it.id == "lion" }
         val manager = CombatManager(SampleData.animalCards, Random(10))

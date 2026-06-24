@@ -61,7 +61,21 @@ enum class FrameEffect {
     FROST,
     LIGHTNING,
     RAIN,
-    STARFIELD
+    STARFIELD,
+    ROUND_GROWTH,
+    WHALE_SONG,
+    TENTACLE,
+    TURTLE_SHELL,
+    MANTA_CURRENT,
+    DOLPHIN_ECHO,
+    JUNGLE_VINES,
+    POISON_GLOW,
+    APE_STRENGTH,
+    ARCTIC_AURA,
+    TUSK_GUARD,
+    SNOW_TRACKS,
+    DESERT_HEAT,
+    SCORPION_STING
 }
 
 enum class FrameType(val displayName: String, val statMultiplier: Double) {

@@ -183,6 +183,10 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         "starlight", "ember", "glacier", "monsoon" -> 30
         "aurora", "storm" -> 40
         "cosmic" -> 50
+        "evolution" -> 60
+        "leviathan", "kraken", "shellback", "ray_current", "echowave" -> 40
+        "rainforest", "dart_frog", "silverback", "polar_night" -> 40
+        "tuskguard", "snowprint", "mirage", "venomtail" -> 40
         else -> 10
     }
 

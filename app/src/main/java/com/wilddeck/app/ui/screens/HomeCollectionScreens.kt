@@ -45,6 +45,7 @@ import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.TriviaQuestion
+import com.wilddeck.app.ui.components.AnimalPhoto
 import com.wilddeck.app.ui.components.AnimalCardView
 
 @Composable
@@ -266,7 +267,7 @@ private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>) {
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(card.imageEmoji, style = MaterialTheme.typography.headlineSmall)
+                    AnimalPhoto(card = card, modifier = Modifier.fillMaxSize(), fallbackFontSize = MaterialTheme.typography.headlineSmall.fontSize)
                 }
             }
         }
@@ -396,9 +397,7 @@ private fun LearnMoreAnimalCard(
                     shape = RoundedCornerShape(18.dp),
                     modifier = Modifier.size(74.dp)
                 ) {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(card.imageEmoji, style = MaterialTheme.typography.displaySmall)
-                    }
+                    AnimalPhoto(card = card, modifier = Modifier.fillMaxSize(), fallbackFontSize = MaterialTheme.typography.displaySmall.fontSize)
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(card.name, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)

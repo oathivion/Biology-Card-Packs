@@ -3,6 +3,7 @@ package com.wilddeck.app.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -35,6 +36,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -43,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.wilddeck.app.R
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.FrameEffect
@@ -111,10 +115,10 @@ fun AnimalCardView(
                     .testTag("animal_image_${card.id}"),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = card.imageEmoji,
-                    fontSize = if (compact) 58.sp else 92.sp,
-                    textAlign = TextAlign.Center
+                AnimalPhoto(
+                    card = card,
+                    modifier = Modifier.fillMaxSize(),
+                    fallbackFontSize = if (compact) 58.sp else 92.sp
                 )
             }
             Spacer(Modifier.height(8.dp))
@@ -144,6 +148,50 @@ fun AnimalCardView(
             AnimatedFrameEffect(frame.effect, frameColor, Modifier.fillMaxSize())
         }
     }
+}
+
+@Composable
+fun AnimalPhoto(
+    card: AnimalCard,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Crop,
+    fallbackFontSize: androidx.compose.ui.unit.TextUnit = 58.sp
+) {
+    val imageResource = animalImageResourceId(card.id)
+    if (imageResource != null) {
+        Image(
+            painter = painterResource(imageResource),
+            contentDescription = "${card.name} photo",
+            modifier = modifier,
+            contentScale = contentScale
+        )
+    } else {
+        Box(modifier, contentAlignment = Alignment.Center) {
+            Text(
+                text = card.imageEmoji,
+                fontSize = fallbackFontSize,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+fun animalImageResourceId(cardId: String): Int? = when (cardId) {
+    "lion" -> R.drawable.animal_lion
+    "elephant" -> R.drawable.animal_elephant
+    "crocodile" -> R.drawable.animal_crocodile
+    "wolf" -> R.drawable.animal_wolf
+    "rabbit" -> R.drawable.animal_rabbit
+    "eagle" -> R.drawable.animal_eagle
+    "shark" -> R.drawable.animal_shark
+    "clownfish" -> R.drawable.animal_clownfish
+    "anemone" -> R.drawable.animal_anemone
+    "rhino" -> R.drawable.animal_rhino
+    "oxpecker" -> R.drawable.animal_oxpecker
+    "pistol_shrimp" -> R.drawable.animal_pistol_shrimp
+    "goby" -> R.drawable.animal_goby
+    "remora" -> R.drawable.animal_remora
+    else -> null
 }
 
 @Composable

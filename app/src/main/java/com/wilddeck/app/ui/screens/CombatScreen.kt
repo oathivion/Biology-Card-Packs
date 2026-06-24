@@ -358,24 +358,6 @@ private fun CombatBoard(
                 modifier = Modifier.weight(1f)
             )
 
-            Surface(
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.86f),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(
-                    when {
-                        session.isDefeated -> "Your team was defeated."
-                        session.isRoundCleared -> "Round cleared. One point earned."
-                        else -> "Drag an available card to its target."
-                    },
-                    Modifier.padding(7.dp),
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("Your team · long-press for details", fontWeight = FontWeight.Bold)
                 Row(
@@ -467,7 +449,9 @@ private fun CombatTeamRow(
                         highlighted = false,
                         modifier = Modifier
                             .fillMaxSize()
-                            .onGloballyPositioned { targetBounds[unit.instanceId] = it.boundsInRoot() }
+                            .onGloballyPositioned {
+                                targetBounds[unit.instanceId] = it.boundsInRoot().expandedForDropTarget(enemy)
+                            }
                             .pointerInput(unit.instanceId) {
                                 detectTapGestures(onLongPress = { onInspect(unit) })
                             }
@@ -476,6 +460,11 @@ private fun CombatTeamRow(
             }
         }
     }
+}
+
+private fun Rect.expandedForDropTarget(enemy: Boolean): Rect {
+    if (!enemy) return this
+    return Rect(left, top, right, bottom + height * 0.38f)
 }
 
 @Composable

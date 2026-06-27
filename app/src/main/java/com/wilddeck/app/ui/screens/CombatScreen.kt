@@ -352,7 +352,6 @@ private fun CombatBoard(
 
     Box(Modifier.fillMaxSize()) {
         BiomeBackground(session, reducedMotion)
-        DefeatBackgroundFade(session.isDefeated, reducedMotion)
         Column(
             Modifier.fillMaxSize().padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -371,6 +370,8 @@ private fun CombatBoard(
                 }
             }
 
+            Box(Modifier.weight(2f)) {
+                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(5.dp)) {
             CombatTeamRow(
                 title = "Enemies · long-press for details",
                 units = session.enemyUnits,
@@ -411,6 +412,10 @@ private fun CombatBoard(
                         )
                     }
                 }
+            }
+
+                }
+                DefeatBackgroundFade(session.isDefeated, reducedMotion)
             }
 
             AnimatedVisibility(

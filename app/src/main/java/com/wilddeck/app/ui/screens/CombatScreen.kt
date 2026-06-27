@@ -62,6 +62,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -89,6 +90,9 @@ import com.wilddeck.app.ui.components.AnimalCardView
 import com.wilddeck.app.ui.components.AnimalPhoto
 import kotlinx.coroutines.delay
 import kotlin.math.absoluteValue
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.sin
 
 @Composable
 fun CombatScreen(
@@ -310,6 +314,11 @@ private fun CombatBoard(
     var activeEffects by remember { mutableStateOf(emptyList<CombatEffect>()) }
     val haptics = LocalHapticFeedback.current
     val tone = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 55) }
+    val enemyAnimationActive = activeEffects.any {
+        it.sourceId?.startsWith("enemy_") == true &&
+            it.targetId?.startsWith("player_") == true &&
+            it.type in setOf(CombatEffectType.ATTACK, CombatEffectType.DAMAGE)
+    }
     DisposableEffect(Unit) { onDispose { tone.release() } }
 
     LaunchedEffect(effectSequence) {
@@ -377,7 +386,7 @@ private fun CombatBoard(
                             allTargetBounds = targetBounds,
                             validTargetIds = validIds,
                             enabled = unit.isAlive && !unit.hasActed && !session.isDefeated && !session.isRoundCleared &&
-                                effects.none { it.type == CombatEffectType.ROUND_CLEAR },
+                                effects.none { it.type == CombatEffectType.ROUND_CLEAR } && !enemyAnimationActive,
                             reducedMotion = reducedMotion,
                             onDrop = { targetId -> onAction(unit.instanceId, targetId) },
                             onInspect = { inspectedUnit = unit },
@@ -405,6 +414,7 @@ private fun CombatBoard(
             }
             TextButton(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("End Run") }
         }
+        EnemyAttackArrow(activeEffects, targetBounds)
 
     }
 
@@ -463,6 +473,61 @@ private fun CombatTeamRow(
 private fun Rect.expandedForDropTarget(enemy: Boolean): Rect {
     if (!enemy) return this
     return Rect(left, top, right, bottom + height * 0.38f)
+}
+
+@Composable
+private fun EnemyAttackArrow(
+    activeEffects: List<CombatEffect>,
+    targetBounds: Map<String, Rect>
+) {
+    val attackEffects = activeEffects.filter {
+        it.sourceId?.startsWith("enemy_") == true &&
+            it.targetId?.startsWith("player_") == true &&
+            it.type == CombatEffectType.ATTACK
+    }
+    if (attackEffects.isEmpty()) return
+    Canvas(Modifier.fillMaxSize().zIndex(30f)) {
+        attackEffects.forEach { effect ->
+            val source = targetBounds[effect.sourceId] ?: return@forEach
+            val target = targetBounds[effect.targetId] ?: return@forEach
+            val start = source.center
+            val end = target.center
+            val angle = atan2(end.y - start.y, end.x - start.x)
+            val lineEnd = Offset(
+                end.x - cos(angle) * 28f,
+                end.y - sin(angle) * 28f
+            )
+            drawLine(
+                color = Color(0xFFFF2F2F),
+                start = start,
+                end = lineEnd,
+                strokeWidth = 9f,
+                cap = StrokeCap.Round
+            )
+            val headLength = 34f
+            val wing = 0.62f
+            drawLine(
+                color = Color(0xFFFF2F2F),
+                start = lineEnd,
+                end = Offset(
+                    lineEnd.x - cos(angle - wing) * headLength,
+                    lineEnd.y - sin(angle - wing) * headLength
+                ),
+                strokeWidth = 9f,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = Color(0xFFFF2F2F),
+                start = lineEnd,
+                end = Offset(
+                    lineEnd.x - cos(angle + wing) * headLength,
+                    lineEnd.y - sin(angle + wing) * headLength
+                ),
+                strokeWidth = 9f,
+                cap = StrokeCap.Round
+            )
+        }
+    }
 }
 
 @Composable
@@ -584,6 +649,13 @@ private fun CombatTile(
                 .fillMaxSize()
                 .background(frameColor?.copy(alpha = 0.10f) ?: Color.Transparent)
         ) {
+            if (impact) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Red.copy(alpha = 0.42f))
+                )
+            }
             Column(
                 Modifier.fillMaxSize().padding(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

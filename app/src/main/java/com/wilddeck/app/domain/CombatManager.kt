@@ -73,10 +73,13 @@ class CombatManager(
             )
         }
 
-        if (updated.playerUnits.filter { it.isAlive }.all { it.hasActed }) {
-            updated = runEnemyTurn(updated)
+        val enemyEffects = if (updated.playerUnits.filter { it.isAlive }.all { it.hasActed }) {
+            val enemyTurn = runEnemyTurn(updated)
+            updated = enemyTurn.session
+            enemyTurn.effects
+        } else {
+            emptyList()
         }
-        val enemyEffects = buildEnemyEffects(action.session, updated)
         return CombatActionResult(updated, action.message, effects = action.effects + enemyEffects)
     }
 
@@ -200,10 +203,11 @@ class CombatManager(
         )
     }
 
-    private fun runEnemyTurn(session: CombatSession): CombatSession {
+    private fun runEnemyTurn(session: CombatSession): EnemyTurnOutcome {
         var players = session.playerUnits
         var enemies = session.enemyUnits
         val log = session.battleLog.toMutableList()
+        val effects = mutableListOf<CombatEffect>()
         enemies.filter { it.isAlive }.forEach { enemy ->
             val currentEnemy = enemies.first { it.instanceId == enemy.instanceId }
             if (currentEnemy.isStunned) {
@@ -217,15 +221,42 @@ class CombatManager(
                     val damaged = takeDamage(target, currentEnemy.damage)
                     players = players.replace(target.instanceId, damaged)
                     log += "${currentEnemy.card.name} hit ${target.card.name} for ${currentEnemy.damage}."
+                    val loss = target.currentHealth - damaged.currentHealth
+                    effects += CombatEffect(
+                        CombatEffectType.ATTACK,
+                        sourceId = currentEnemy.instanceId,
+                        targetId = target.instanceId,
+                        amount = currentEnemy.damage
+                    )
+                    if (loss > 0) {
+                        effects += CombatEffect(
+                            CombatEffectType.DAMAGE,
+                            sourceId = currentEnemy.instanceId,
+                            targetId = target.instanceId,
+                            amount = loss,
+                            label = "-$loss"
+                        )
+                    }
+                    if (target.isAlive && !damaged.isAlive) {
+                        effects += CombatEffect(
+                            CombatEffectType.DEFEAT,
+                            sourceId = currentEnemy.instanceId,
+                            targetId = target.instanceId,
+                            label = "Defeated"
+                        )
+                    }
                 }
             }
         }
         players = players.map { it.copy(hasActed = false, isTaunting = false) }
-        return session.copy(
-            playerUnits = players,
-            enemyUnits = enemies,
-            battleLog = log.takeLast(8),
-            isDefeated = players.none { it.isAlive }
+        return EnemyTurnOutcome(
+            session = session.copy(
+                playerUnits = players,
+                enemyUnits = enemies,
+                battleLog = log.takeLast(8),
+                isDefeated = players.none { it.isAlive }
+            ),
+            effects = effects
         )
     }
 
@@ -327,25 +358,14 @@ class CombatManager(
     private fun List<CombatUnit>.replace(id: String, replacement: CombatUnit): List<CombatUnit> =
         map { if (it.instanceId == id) replacement else it }
 
-    private fun buildEnemyEffects(before: CombatSession, after: CombatSession): List<CombatEffect> =
-        after.playerUnits.mapNotNull { updated ->
-            val original = before.playerUnits.firstOrNull { it.instanceId == updated.instanceId } ?: return@mapNotNull null
-            val loss = original.currentHealth - updated.currentHealth
-            if (loss <= 0) null else CombatEffect(
-                CombatEffectType.DAMAGE,
-                targetId = updated.instanceId,
-                amount = loss,
-                label = "-$loss"
-            )
-        } + after.playerUnits.filterNot { it.isAlive }.mapNotNull { defeated ->
-            before.playerUnits.firstOrNull { it.instanceId == defeated.instanceId && it.isAlive }?.let {
-                CombatEffect(CombatEffectType.DEFEAT, targetId = defeated.instanceId, label = "Defeated")
-            }
-        }
-
     private data class ActionOutcome(
         val session: CombatSession,
         val message: String,
+        val effects: List<CombatEffect>
+    )
+
+    private data class EnemyTurnOutcome(
+        val session: CombatSession,
         val effects: List<CombatEffect>
     )
 }

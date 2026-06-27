@@ -334,7 +334,18 @@ private fun CombatBoard(
         if (soundEnabled) {
             tone.startTone(toneFor(effects), if (reducedMotion) 80 else 180)
         }
-        delay(if (reducedMotion) 120 else 420)
+        val hasEnemyAttackAnimation = effects.any {
+            it.sourceId?.startsWith("enemy_") == true &&
+                it.targetId?.startsWith("player_") == true &&
+                it.type in setOf(CombatEffectType.ATTACK, CombatEffectType.DAMAGE)
+        }
+        delay(
+            when {
+                reducedMotion -> 120
+                hasEnemyAttackAnimation -> 1500
+                else -> 420
+            }
+        )
         activeEffects = emptyList()
     }
 
@@ -489,6 +500,7 @@ private fun EnemyAttackArrow(
     if (attackEffects.isEmpty()) return
     val animationKey = attackEffects.joinToString { "${it.sourceId}->${it.targetId}:${it.amount}" }
     val progress = remember(animationKey) { Animatable(if (attackEffects.isEmpty()) 1f else 0f) }
+    val arrowStrokeWidth = 11.25f
     LaunchedEffect(animationKey) {
         progress.snapTo(0f)
         progress.animateTo(
@@ -515,7 +527,7 @@ private fun EnemyAttackArrow(
                 color = Color(0xFFFF2F2F),
                 start = start,
                 end = tip,
-                strokeWidth = 9f,
+                strokeWidth = arrowStrokeWidth,
                 cap = StrokeCap.Round
             )
             if (progress.value < 0.08f) return@forEach
@@ -528,7 +540,7 @@ private fun EnemyAttackArrow(
                     tip.x - cos(angle - wing) * headLength,
                     tip.y - sin(angle - wing) * headLength
                 ),
-                strokeWidth = 9f,
+                strokeWidth = arrowStrokeWidth,
                 cap = StrokeCap.Round
             )
             drawLine(
@@ -538,7 +550,7 @@ private fun EnemyAttackArrow(
                     tip.x - cos(angle + wing) * headLength,
                     tip.y - sin(angle + wing) * headLength
                 ),
-                strokeWidth = 9f,
+                strokeWidth = arrowStrokeWidth,
                 cap = StrokeCap.Round
             )
         }

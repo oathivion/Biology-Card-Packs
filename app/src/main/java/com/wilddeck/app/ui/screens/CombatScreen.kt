@@ -10,6 +10,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateOffsetAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -486,6 +487,15 @@ private fun EnemyAttackArrow(
             it.type == CombatEffectType.ATTACK
     }
     if (attackEffects.isEmpty()) return
+    val animationKey = attackEffects.joinToString { "${it.sourceId}->${it.targetId}:${it.amount}" }
+    val progress = remember(animationKey) { Animatable(if (attackEffects.isEmpty()) 1f else 0f) }
+    LaunchedEffect(animationKey) {
+        progress.snapTo(0f)
+        progress.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = 1000, easing = FastOutSlowInEasing)
+        )
+    }
     Canvas(Modifier.fillMaxSize().zIndex(30f)) {
         attackEffects.forEach { effect ->
             val source = targetBounds[effect.sourceId] ?: return@forEach
@@ -497,31 +507,36 @@ private fun EnemyAttackArrow(
                 end.x - cos(angle) * 28f,
                 end.y - sin(angle) * 28f
             )
+            val tip = Offset(
+                start.x + (lineEnd.x - start.x) * progress.value,
+                start.y + (lineEnd.y - start.y) * progress.value
+            )
             drawLine(
                 color = Color(0xFFFF2F2F),
                 start = start,
-                end = lineEnd,
+                end = tip,
                 strokeWidth = 9f,
                 cap = StrokeCap.Round
             )
+            if (progress.value < 0.08f) return@forEach
             val headLength = 34f
             val wing = 0.62f
             drawLine(
                 color = Color(0xFFFF2F2F),
-                start = lineEnd,
+                start = tip,
                 end = Offset(
-                    lineEnd.x - cos(angle - wing) * headLength,
-                    lineEnd.y - sin(angle - wing) * headLength
+                    tip.x - cos(angle - wing) * headLength,
+                    tip.y - sin(angle - wing) * headLength
                 ),
                 strokeWidth = 9f,
                 cap = StrokeCap.Round
             )
             drawLine(
                 color = Color(0xFFFF2F2F),
-                start = lineEnd,
+                start = tip,
                 end = Offset(
-                    lineEnd.x - cos(angle + wing) * headLength,
-                    lineEnd.y - sin(angle + wing) * headLength
+                    tip.x - cos(angle + wing) * headLength,
+                    tip.y - sin(angle + wing) * headLength
                 ),
                 strokeWidth = 9f,
                 cap = StrokeCap.Round

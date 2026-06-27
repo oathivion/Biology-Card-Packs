@@ -65,6 +65,7 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
@@ -342,7 +343,7 @@ private fun CombatBoard(
         delay(
             when {
                 reducedMotion -> 120
-                hasEnemyAttackAnimation -> 1500
+                hasEnemyAttackAnimation -> 1200
                 else -> 420
             }
         )
@@ -351,6 +352,7 @@ private fun CombatBoard(
 
     Box(Modifier.fillMaxSize()) {
         BiomeBackground(session, reducedMotion)
+        DefeatBackgroundFade(session.isDefeated, reducedMotion)
         Column(
             Modifier.fillMaxSize().padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -554,6 +556,28 @@ private fun EnemyAttackArrow(
                 cap = StrokeCap.Round
             )
         }
+    }
+}
+
+@Composable
+private fun DefeatBackgroundFade(defeated: Boolean, reducedMotion: Boolean) {
+    if (!defeated) return
+    val fade = remember { Animatable(0f) }
+    LaunchedEffect(defeated) {
+        fade.snapTo(0f)
+        fade.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(durationMillis = if (reducedMotion) 1 else 1400, easing = FastOutSlowInEasing)
+        )
+    }
+    Canvas(Modifier.fillMaxSize()) {
+        drawRect(
+            lerp(
+                Color(0xFFE01919).copy(alpha = 0.72f),
+                Color.Black.copy(alpha = 0.88f),
+                fade.value
+            )
+        )
     }
 }
 

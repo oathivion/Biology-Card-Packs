@@ -65,13 +65,6 @@ fun CardDetailScreen(
                 "$partnerName — ${it.type.name.lowercase().replaceFirstChar(Char::uppercase)}\n${it.description}"
             }
         )
-        if (isOwned) {
-            Button(onClick = onCustomize, modifier = Modifier.fillMaxWidth()) {
-                Text("Customize this card's frame")
-            }
-        } else {
-            Text("Earn this card in the mini game to customize it.", color = MaterialTheme.colorScheme.secondary)
-        }
     }
 }
 

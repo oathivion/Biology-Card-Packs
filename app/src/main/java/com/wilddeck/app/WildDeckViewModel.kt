@@ -9,6 +9,7 @@ import com.wilddeck.app.data.PlayerDataStore
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.domain.DeckManager
 import com.wilddeck.app.domain.CombatManager
+import com.wilddeck.app.domain.CardLevelingManager
 import com.wilddeck.app.domain.FrameManager
 import com.wilddeck.app.domain.MiniGameManager
 import com.wilddeck.app.domain.PlayerInventory
@@ -55,6 +56,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         loaded.unlockedFrameIds,
         loaded.selectedFrames
     )
+    private val levelingManager = CardLevelingManager(loaded.cardProgress)
     private val miniGameManager = MiniGameManager(SampleData.animalCards)
     private val combatManager = CombatManager(SampleData.animalCards, frames = SampleData.frames)
     private var previousMiniGameCardId: String? = null
@@ -72,7 +74,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         publish()
     }
 
-    fun card(cardId: String?): AnimalCard? = cardId?.let(catalog::get)?.withSelectedFrame()
+    fun card(cardId: String?): AnimalCard? = cardId?.let(catalog::get)?.withProgress()?.withSelectedFrame()
 
     fun relationshipsFor(cardIds: List<String>): List<SymbiosisRelationship> =
         symbiosisManager.score(cardIds, catalog).activeRelationships
@@ -110,6 +112,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             .orEmpty()
         val cards = selectedDeckCards
             .ifEmpty { inventory.getAll(catalog).take(5) }
+            .map { it.withProgress() }
             .map { it.withBattleFrame() }
         if (cards.isEmpty()) {
             showMessage("Earn or unlock a creature before starting combat.")
@@ -123,9 +126,31 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     fun performCombatAction(actorId: String, targetId: String) {
         val current = uiState.combatSession ?: return
         val result = combatManager.act(current, actorId, targetId)
-        if (result.roundPointAwarded) progressionPoints += 1
+        var message = result.message
+        if (result.roundPointAwarded) {
+            progressionPoints += 1
+            val baseXp = CardLevelingManager.roundExperience(result.session.round)
+            val multipliers = current.playerUnits.associate { unit ->
+                unit.card.id to (unit.frame?.xpMultiplier ?: 1.0)
+            }
+            val leveling = levelingManager.addExperience(
+                current.playerUnits.map { it.card.id },
+                baseXp,
+                multipliers
+            )
+            val xpText = if (multipliers.values.any { it > 1.0 }) {
+                "$baseXp base XP, doubled by equipped Evolution Frames"
+            } else {
+                "$baseXp XP"
+            }
+            message = if (leveling.totalLevelsGained > 0) {
+                "${result.message} Cards gained $xpText. ${leveling.totalLevelsGained} level up!"
+            } else {
+                "${result.message} Cards gained $xpText."
+            }
+        }
         combatEffectSequence += 1
-        publish(combat = result.session, effects = result.effects, message = result.message)
+        publish(combat = result.session, effects = result.effects, message = message)
     }
 
     fun nextCombatRound() {
@@ -248,6 +273,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             decks = deckManager.allDecks(),
             selectedFrames = frameManager.selectedFrames(),
             unlockedFrameIds = frameManager.unlockedIds(),
+            cardProgress = levelingManager.allProgress(),
             progressionPoints = progressionPoints,
             reducedMotion = reducedMotion,
             soundEnabled = soundEnabled,
@@ -255,13 +281,13 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         )
         dataStore.save(persisted)
         uiState = WildDeckUiState(
-            catalog = SampleData.animalCards.map { it.withSelectedFrame() },
-            ownedCards = inventory.getAll(catalog).map { it.withSelectedFrame() },
+            catalog = SampleData.animalCards.map { it.withProgress().withSelectedFrame() },
+            ownedCards = inventory.getAll(catalog).map { it.withProgress().withSelectedFrame() },
             decks = deckManager.allDecks(),
             frames = frameManager.allFrames(),
             unlockedFrameIds = frameManager.unlockedIds(),
             selectedFrames = frameManager.selectedFrames(),
-            miniGameSession = session?.copy(targetCard = session.targetCard.withSelectedFrame()),
+            miniGameSession = session?.copy(targetCard = session.targetCard.withProgress().withSelectedFrame()),
             miniGameFeedback = gameFeedback,
             combatSession = combat,
             combatEffects = effects,
@@ -276,6 +302,9 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
 
     private fun AnimalCard.withSelectedFrame(): AnimalCard =
         copy(currentFrameId = frameManager.selectedFrameId(id))
+
+    private fun AnimalCard.withProgress(): AnimalCard =
+        levelingManager.applyProgress(this)
 
     private fun AnimalCard.withBattleFrame(): AnimalCard {
         val selectedFrameId = frameManager.selectedFrameId(id)

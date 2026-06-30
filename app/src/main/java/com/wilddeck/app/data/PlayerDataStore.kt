@@ -1,6 +1,7 @@
 package com.wilddeck.app.data
 
 import android.content.Context
+import com.wilddeck.app.model.CardProgress
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.PersistedPlayerData
 import org.json.JSONArray
@@ -20,6 +21,21 @@ class PlayerDataStore(context: Context) {
                 val objectValue = root.optJSONObject("selectedFrames") ?: JSONObject()
                 objectValue.keys().forEach { cardId ->
                     put(cardId, objectValue.getString(cardId))
+                }
+            }
+            val cardProgress = buildMap {
+                val objectValue = root.optJSONObject("cardProgress") ?: JSONObject()
+                objectValue.keys().forEach { cardId ->
+                    val item = objectValue.getJSONObject(cardId)
+                    put(
+                        cardId,
+                        CardProgress(
+                            level = item.optInt("level", 1),
+                            experience = item.optInt("experience", 0),
+                            healthBonus = item.optInt("healthBonus", 0),
+                            dangerBonus = item.optInt("dangerBonus", 0)
+                        )
+                    )
                 }
             }
             val decks = buildList {
@@ -42,6 +58,7 @@ class PlayerDataStore(context: Context) {
                 decks = decks,
                 selectedFrames = selectedFrames,
                 unlockedFrameIds = unlockedIds,
+                cardProgress = cardProgress,
                 progressionPoints = root.optInt("progressionPoints", 1),
                 reducedMotion = root.optBoolean("reducedMotion", false),
                 soundEnabled = root.optBoolean("soundEnabled", true),
@@ -55,6 +72,16 @@ class PlayerDataStore(context: Context) {
             put("ownedCardIds", JSONArray(data.ownedCardIds.toList()))
             put("unlockedFrameIds", JSONArray(data.unlockedFrameIds.toList()))
             put("selectedFrames", JSONObject(data.selectedFrames))
+            put("cardProgress", JSONObject().apply {
+                data.cardProgress.forEach { (cardId, progress) ->
+                    put(cardId, JSONObject().apply {
+                        put("level", progress.level)
+                        put("experience", progress.experience)
+                        put("healthBonus", progress.healthBonus)
+                        put("dangerBonus", progress.dangerBonus)
+                    })
+                }
+            })
             put("progressionPoints", data.progressionPoints)
             put("reducedMotion", data.reducedMotion)
             put("soundEnabled", data.soundEnabled)

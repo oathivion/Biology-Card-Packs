@@ -16,11 +16,22 @@ data class AnimalCard(
     val ability: AnimalAbility = AnimalAbility("field_notes", "Field Notes", AbilityType.STRIKE,
         "Uses its natural adaptations in combat."),
     val defaultFrameId: String = "black",
-    val currentFrameId: String = defaultFrameId
+    val currentFrameId: String = defaultFrameId,
+    val level: Int = 1,
+    val experience: Int = 0,
+    val healthBonus: Int = 0,
+    val dangerBonus: Int = 0
 ) {
     val combatRole: CombatRole
         get() = if (health + danger < 5) CombatRole.SUPPORT else CombatRole.ATTACKER
 }
+
+data class CardProgress(
+    val level: Int = 1,
+    val experience: Int = 0,
+    val healthBonus: Int = 0,
+    val dangerBonus: Int = 0
+)
 
 enum class CombatRole { ATTACKER, SUPPORT }
 
@@ -47,7 +58,8 @@ data class CardFrame(
     val rarityRequirement: CardRarity? = null,
     val effect: FrameEffect = FrameEffect.NONE,
     val type: FrameType = FrameType.BALANCED,
-    val combatBonus: FrameCombatBonus = FrameCombatBonus()
+    val combatBonus: FrameCombatBonus = FrameCombatBonus(),
+    val xpMultiplier: Double = 1.0
 )
 
 enum class FrameEffect {
@@ -156,6 +168,7 @@ data class PersistedPlayerData(
     val decks: List<Deck> = emptyList(),
     val selectedFrames: Map<String, String> = emptyMap(),
     val unlockedFrameIds: Set<String> = setOf("black", "forest", "ocean"),
+    val cardProgress: Map<String, CardProgress> = emptyMap(),
     val progressionPoints: Int = 1,
     val reducedMotion: Boolean = false,
     val soundEnabled: Boolean = true,

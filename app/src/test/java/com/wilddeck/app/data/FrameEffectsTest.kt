@@ -17,4 +17,12 @@ class FrameEffectsTest {
         assertTrue(animatedFrames.all { it.type != FrameType.BALANCED })
         assertTrue(animatedFrames.all { it.combatBonus.description != "No combat bonus." })
     }
+
+    @Test
+    fun evolutionFrame_providesDoubleXp() {
+        val xpFrames = SampleData.frames.filter { it.xpMultiplier > 1.0 }
+
+        assertEquals(listOf("evolution"), xpFrames.map { it.id })
+        assertEquals(2.0, xpFrames.single().xpMultiplier, 0.0)
+    }
 }

@@ -1,6 +1,7 @@
 package com.wilddeck.app.domain
 
 import com.wilddeck.app.model.AnimalCard
+import com.wilddeck.app.model.CardProgress
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.DeckScore
@@ -134,6 +135,84 @@ class FrameManager(
 
     fun resetFrame(cardId: String, inventory: PlayerInventory): RuleResult =
         applyFrame(cardId, "black", inventory)
+}
+
+class CardLevelingManager(
+    initialProgress: Map<String, CardProgress> = emptyMap(),
+    private val random: Random = Random.Default
+) {
+    private val progressByCardId = initialProgress.toMutableMap()
+
+    fun allProgress(): Map<String, CardProgress> = progressByCardId.toMap()
+
+    fun progressFor(cardId: String): CardProgress =
+        progressByCardId[cardId] ?: CardProgress()
+
+    fun applyProgress(card: AnimalCard): AnimalCard {
+        val progress = progressFor(card.id)
+        return card.copy(
+            health = card.health - card.healthBonus + progress.healthBonus,
+            danger = card.danger - card.dangerBonus + progress.dangerBonus,
+            level = progress.level,
+            experience = progress.experience,
+            healthBonus = progress.healthBonus,
+            dangerBonus = progress.dangerBonus
+        )
+    }
+
+    fun addExperience(cardIds: Collection<String>, baseExperience: Int, xpMultiplierByCardId: Map<String, Double>): LevelingResult {
+        var totalLevelsGained = 0
+        val leveledCardIds = mutableSetOf<String>()
+        cardIds.distinct().forEach { cardId ->
+            val multiplier = xpMultiplierByCardId[cardId] ?: 1.0
+            val earned = (baseExperience * multiplier).roundToInt().coerceAtLeast(0)
+            val before = progressFor(cardId)
+            val after = addExperience(before, earned)
+            if (after != before) progressByCardId[cardId] = after
+            val levelsGained = after.level - before.level
+            if (levelsGained > 0) {
+                totalLevelsGained += levelsGained
+                leveledCardIds += cardId
+            }
+        }
+        return LevelingResult(baseExperience, totalLevelsGained, leveledCardIds)
+    }
+
+    private fun addExperience(progress: CardProgress, amount: Int): CardProgress {
+        if (progress.level >= MAX_LEVEL || amount <= 0) {
+            return progress.copy(level = progress.level.coerceAtMost(MAX_LEVEL), experience = 0)
+        }
+        var level = progress.level.coerceIn(1, MAX_LEVEL)
+        var experience = progress.experience + amount
+        var healthBonus = progress.healthBonus
+        var dangerBonus = progress.dangerBonus
+        while (level < MAX_LEVEL && experience >= experienceToNextLevel(level)) {
+            experience -= experienceToNextLevel(level)
+            level += 1
+            if (random.nextBoolean()) healthBonus += 1
+            if (random.nextBoolean()) dangerBonus += 1
+        }
+        if (level >= MAX_LEVEL) experience = 0
+        return CardProgress(level, experience, healthBonus, dangerBonus)
+    }
+
+    data class LevelingResult(
+        val baseExperience: Int,
+        val totalLevelsGained: Int,
+        val leveledCardIds: Set<String>
+    )
+
+    companion object {
+        const val MAX_LEVEL = 50
+
+        fun roundExperience(round: Int): Int = (round.coerceAtLeast(1) * 5)
+
+        fun experienceToNextLevel(level: Int): Int {
+            if (level >= MAX_LEVEL) return 0
+            val exponent = (level - 1).toDouble() / (MAX_LEVEL - 2).toDouble()
+            return (5.0 * Math.pow(10000.0 / 5.0, exponent)).roundToInt().coerceAtLeast(5)
+        }
+    }
 }
 
 class MiniGameManager(

@@ -175,4 +175,37 @@ class GameManagersTest {
         )
         assertEquals("forest", manager.selectedFrameId("lion"))
     }
+
+    @Test
+    fun levelingCurve_startsAtFiveXpAndCapsAtFifty() {
+        assertEquals(5, CardLevelingManager.experienceToNextLevel(1))
+        assertEquals(10000, CardLevelingManager.experienceToNextLevel(49))
+        assertEquals(0, CardLevelingManager.experienceToNextLevel(50))
+        assertEquals(50, CardLevelingManager.MAX_LEVEL)
+    }
+
+    @Test
+    fun leveling_awardsXpAndRollsEachStatAtMostOncePerLevel() {
+        val manager = CardLevelingManager(random = Random(3))
+
+        val result = manager.addExperience(listOf("lion"), 5, emptyMap())
+        val progress = manager.progressFor("lion")
+
+        assertEquals(1, result.totalLevelsGained)
+        assertEquals(2, progress.level)
+        assertEquals(0, progress.experience)
+        assertTrue(progress.healthBonus in 0..1)
+        assertTrue(progress.dangerBonus in 0..1)
+    }
+
+    @Test
+    fun leveling_usesFrameXpMultiplier() {
+        val manager = CardLevelingManager(random = Random(5))
+
+        manager.addExperience(listOf("lion"), 3, mapOf("lion" to 2.0))
+        val progress = manager.progressFor("lion")
+
+        assertEquals(2, progress.level)
+        assertEquals(1, progress.experience)
+    }
 }

@@ -26,6 +26,7 @@ import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.SymbiosisRelationship
+import com.wilddeck.app.domain.CardLevelingManager
 import com.wilddeck.app.ui.components.AnimalCardView
 
 @Composable
@@ -47,6 +48,23 @@ fun CardDetailScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         AnimalCardView(card, frame, Modifier.fillMaxWidth().height(560.dp))
+        val xpToNext = CardLevelingManager.experienceToNextLevel(card.level)
+        DetailBlock(
+            "Level ${card.level}/${CardLevelingManager.MAX_LEVEL}",
+            if (card.level >= CardLevelingManager.MAX_LEVEL) {
+                "Level cap reached. Stat bonuses: +${card.healthBonus} health, +${card.dangerBonus} danger."
+            } else {
+                "${card.experience}/$xpToNext XP to next level.\nStat bonuses: +${card.healthBonus} health, +${card.dangerBonus} danger.\nOn each level up, health and danger each roll once for a chance at +1."
+            }
+        )
+        DetailBlock(
+            "Equipped frame",
+            if (frame.xpMultiplier > 1.0) {
+                "${frame.name}: ${frame.combatBonus.description}\nXP earned: x${frame.xpMultiplier.toInt()}"
+            } else {
+                "${frame.name}: ${frame.combatBonus.description}\nXP earned: normal"
+            }
+        )
         DetailBlock("Habitat", card.habitat)
         DetailBlock("Food", card.food)
         DetailBlock("Why health is ${card.health}", card.healthExplanation)

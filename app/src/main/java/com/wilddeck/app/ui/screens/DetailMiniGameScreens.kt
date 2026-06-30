@@ -1,5 +1,7 @@
 package com.wilddeck.app.ui.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -19,6 +22,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,15 +53,7 @@ fun CardDetailScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         AnimalCardView(card, frame, Modifier.fillMaxWidth().height(560.dp))
-        val xpToNext = CardLevelingManager.experienceToNextLevel(card.level)
-        DetailBlock(
-            "Level ${card.level}/${CardLevelingManager.MAX_LEVEL}",
-            if (card.level >= CardLevelingManager.MAX_LEVEL) {
-                "Level cap reached. Stat bonuses: +${card.healthBonus} health, +${card.dangerBonus} danger."
-            } else {
-                "${card.experience}/$xpToNext XP to next level.\nStat bonuses: +${card.healthBonus} health, +${card.dangerBonus} danger.\nOn each level up, health and danger each roll once for a chance at +1."
-            }
-        )
+        LevelProgressBlock(card)
         DetailBlock(
             "Equipped frame",
             if (frame.xpMultiplier > 1.0) {
@@ -83,6 +80,84 @@ fun CardDetailScreen(
                 "$partnerName — ${it.type.name.lowercase().replaceFirstChar(Char::uppercase)}\n${it.description}"
             }
         )
+    }
+}
+
+@Composable
+private fun LevelProgressBlock(card: AnimalCard) {
+    val xpToNext = CardLevelingManager.experienceToNextLevel(card.level)
+    val progress = if (card.level >= CardLevelingManager.MAX_LEVEL || xpToNext <= 0) {
+        1f
+    } else {
+        (card.experience.toFloat() / xpToNext).coerceIn(0f, 1f)
+    }
+    Card(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                "Level (${card.level})",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black
+            )
+            Text("Level up stat bonuses", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatBonusBox(
+                    label = "Danger Bonus",
+                    value = card.dangerBonus,
+                    color = Color(0xFF6A1B9A),
+                    modifier = Modifier.weight(1f)
+                )
+                StatBonusBox(
+                    label = "Health Bonus",
+                    value = card.healthBonus,
+                    color = Color(0xFF1565C0),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(18.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(Color.Black)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(progress)
+                            .height(18.dp)
+                            .background(Color(0xFF22A447))
+                    )
+                }
+                Text(
+                    if (card.level >= CardLevelingManager.MAX_LEVEL) {
+                        "Level cap reached"
+                    } else {
+                        "${card.experience}/$xpToNext XP"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Text(
+                "On each level up, health and danger each roll once for a chance at +1.",
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatBonusBox(label: String, value: Int, color: Color, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(10.dp))
+            .background(color)
+            .padding(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(label, color = Color.White, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+        Text("+$value", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
     }
 }
 

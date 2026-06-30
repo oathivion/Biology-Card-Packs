@@ -340,10 +340,12 @@ private fun CombatBoard(
                 it.targetId?.startsWith("player_") == true &&
                 it.type in setOf(CombatEffectType.ATTACK, CombatEffectType.DAMAGE)
         }
+        val hasXpReward = effects.any { it.type == CombatEffectType.XP_GAIN }
         delay(
             when {
                 reducedMotion -> 120
                 hasEnemyAttackAnimation -> 1200
+                hasXpReward -> 650
                 else -> 420
             }
         )
@@ -434,6 +436,10 @@ private fun CombatBoard(
             TextButton(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("End Run") }
         }
         EnemyAttackArrow(activeEffects, targetBounds)
+        XpRewardOverlay(
+            effect = activeEffects.firstOrNull { it.type == CombatEffectType.XP_GAIN },
+            reducedMotion = reducedMotion
+        )
 
     }
 
@@ -825,6 +831,41 @@ private fun PointReward(reducedMotion: Boolean) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text("+1 POINT", color = Color(0xFFFFD34E), fontSize = 28.sp, fontWeight = FontWeight.Black,
             modifier = Modifier.graphicsLayer { translationY = offset })
+    }
+}
+
+@Composable
+private fun XpRewardOverlay(effect: CombatEffect?, reducedMotion: Boolean) {
+    AnimatedVisibility(
+        visible = effect != null,
+        enter = fadeIn(tween(if (reducedMotion) 1 else 140)) + scaleIn(
+            initialScale = if (reducedMotion) 1f else 0.9f,
+            animationSpec = tween(if (reducedMotion) 1 else 140, easing = FastOutSlowInEasing)
+        ),
+        exit = fadeOut(tween(if (reducedMotion) 1 else 240)) + scaleOut(
+            targetScale = if (reducedMotion) 1f else 1.08f,
+            animationSpec = tween(if (reducedMotion) 1 else 240, easing = FastOutSlowInEasing)
+        ),
+        modifier = Modifier.fillMaxSize().zIndex(30f)
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.54f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                effect?.label ?: "",
+                color = Color(0xFF51D88A),
+                fontSize = 44.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Color.Black.copy(alpha = 0.72f))
+                    .padding(horizontal = 32.dp, vertical = 18.dp)
+            )
+        }
     }
 }
 

@@ -226,7 +226,7 @@ data class CombatActionResult(
 )
 
 enum class CombatEffectType {
-    ATTACK, DAMAGE, HEAL, SHIELD, EMPOWER, TAUNT, STUN, DEFEAT, ROUND_START, ROUND_CLEAR, POINT
+    ATTACK, DAMAGE, HEAL, SHIELD, EMPOWER, TAUNT, STUN, DEFEAT, ROUND_START, ROUND_CLEAR, POINT, XP_GAIN
 }
 
 data class CombatEffect(

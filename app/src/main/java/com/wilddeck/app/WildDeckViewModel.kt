@@ -18,6 +18,7 @@ import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatEffect
+import com.wilddeck.app.model.CombatEffectType
 import com.wilddeck.app.model.Deck
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.PersistedPlayerData
@@ -127,6 +128,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         val current = uiState.combatSession ?: return
         val result = combatManager.act(current, actorId, targetId)
         var message = result.message
+        var effects = result.effects
         if (result.roundPointAwarded) {
             progressionPoints += 1
             val baseXp = CardLevelingManager.roundExperience(result.session.round)
@@ -137,6 +139,17 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
                 current.playerUnits.map { it.card.id },
                 baseXp,
                 multipliers
+            )
+            val xpAwards = multipliers.values.map { (baseXp * it).toInt() }.ifEmpty { listOf(baseXp) }
+            val xpLabel = if (xpAwards.minOrNull() == xpAwards.maxOrNull()) {
+                "+${xpAwards.first()} XP"
+            } else {
+                "+${xpAwards.minOrNull()}-${xpAwards.maxOrNull()} XP"
+            }
+            effects = result.effects + CombatEffect(
+                CombatEffectType.XP_GAIN,
+                amount = xpAwards.maxOrNull() ?: baseXp,
+                label = xpLabel
             )
             val xpText = if (multipliers.values.any { it > 1.0 }) {
                 "$baseXp base XP, doubled by equipped Evolution Frames"
@@ -150,7 +163,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             }
         }
         combatEffectSequence += 1
-        publish(combat = result.session, effects = result.effects, message = message)
+        publish(combat = result.session, effects = effects, message = message)
     }
 
     fun nextCombatRound() {

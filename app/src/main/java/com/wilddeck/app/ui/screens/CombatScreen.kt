@@ -341,9 +341,11 @@ private fun CombatBoard(
                 it.type in setOf(CombatEffectType.ATTACK, CombatEffectType.DAMAGE)
         }
         val hasXpReward = effects.any { it.type == CombatEffectType.XP_GAIN }
+        val hasCardUnlock = effects.any { it.type == CombatEffectType.CARD_UNLOCK }
         delay(
             when {
                 reducedMotion -> 120
+                hasCardUnlock -> 1900
                 hasEnemyAttackAnimation -> 1200
                 hasXpReward -> 650
                 else -> 420
@@ -438,6 +440,13 @@ private fun CombatBoard(
         EnemyAttackArrow(activeEffects, targetBounds)
         XpRewardOverlay(
             effect = activeEffects.firstOrNull { it.type == CombatEffectType.XP_GAIN },
+            reducedMotion = reducedMotion
+        )
+        CardUnlockOverlay(
+            effect = activeEffects.firstOrNull { it.type == CombatEffectType.CARD_UNLOCK },
+            card = activeEffects.firstOrNull { it.type == CombatEffectType.CARD_UNLOCK }?.sourceId?.let { cardId ->
+                session.enemyUnits.firstOrNull { it.card.id == cardId }?.card
+            },
             reducedMotion = reducedMotion
         )
 
@@ -865,6 +874,66 @@ private fun XpRewardOverlay(effect: CombatEffect?, reducedMotion: Boolean) {
                     .background(Color.Black.copy(alpha = 0.72f))
                     .padding(horizontal = 32.dp, vertical = 18.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun CardUnlockOverlay(effect: CombatEffect?, card: AnimalCard?, reducedMotion: Boolean) {
+    AnimatedVisibility(
+        visible = effect != null && card != null,
+        enter = fadeIn(tween(if (reducedMotion) 1 else 180)) + scaleIn(
+            initialScale = if (reducedMotion) 1f else 0.86f,
+            animationSpec = tween(if (reducedMotion) 1 else 180, easing = FastOutSlowInEasing)
+        ),
+        exit = fadeOut(tween(if (reducedMotion) 1 else 320)) + scaleOut(
+            targetScale = if (reducedMotion) 1f else 1.06f,
+            animationSpec = tween(if (reducedMotion) 1 else 320, easing = FastOutSlowInEasing)
+        ),
+        modifier = Modifier.fillMaxSize().zIndex(31f)
+    ) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.68f))
+                .padding(28.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                shape = RoundedCornerShape(22.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    Modifier.padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        effect?.label ?: "Card unlocked",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center
+                    )
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (card != null) {
+                            AnimalPhoto(card = card, modifier = Modifier.fillMaxSize())
+                        }
+                    }
+                    Text(
+                        card?.name.orEmpty(),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }

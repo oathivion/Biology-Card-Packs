@@ -240,6 +240,7 @@ fun animalImageResourceId(cardId: String): Int? = when (cardId) {
     "sidewinder" -> R.drawable.animal_sidewinder
     "addax" -> R.drawable.animal_addax
     "frilled_lizard" -> R.drawable.animal_frilled_lizard
+    "asian_water_monitor" -> R.drawable.animal_asian_water_monitor
     else -> null
 }
 

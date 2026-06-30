@@ -36,7 +36,7 @@ data class CardProgress(
 enum class CombatRole { ATTACKER, SUPPORT }
 
 enum class AbilityType {
-    STRIKE, TAUNT, HEAL, SHIELD, PACK, AMBUSH, STUN, DODGE, POISON, EMPOWER
+    STRIKE, TAUNT, HEAL, SHIELD, PACK, AMBUSH, STUN, DODGE, POISON, EMPOWER, SPLASH
 }
 
 data class AnimalAbility(
@@ -226,7 +226,7 @@ data class CombatActionResult(
 )
 
 enum class CombatEffectType {
-    ATTACK, DAMAGE, HEAL, SHIELD, EMPOWER, TAUNT, STUN, DEFEAT, ROUND_START, ROUND_CLEAR, POINT, XP_GAIN
+    ATTACK, DAMAGE, HEAL, SHIELD, EMPOWER, TAUNT, STUN, DEFEAT, ROUND_START, ROUND_CLEAR, POINT, XP_GAIN, CARD_UNLOCK
 }
 
 data class CombatEffect(

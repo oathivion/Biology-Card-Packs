@@ -120,6 +120,7 @@ class CombatManager(
         var taunts = false
         var stuns = false
         when (actor.card.ability.type) {
+            AbilityType.SPLASH -> return splashAttackAction(session, actor, target)
             AbilityType.PACK ->
                 damage += session.playerUnits.count { it.isAlive && it.instanceId != actor.instanceId } *
                     actor.card.ability.power
@@ -159,6 +160,45 @@ class CombatManager(
         return ActionOutcome(
             updated,
             "${actor.card.name} used ${actor.card.ability.name} on ${target.card.name} for $damage damage.",
+            effects
+        )
+    }
+
+    private fun splashAttackAction(
+        session: CombatSession,
+        actor: CombatUnit,
+        primaryTarget: CombatUnit
+    ): ActionOutcome {
+        val primaryDamage = actor.damage + actor.attackPowerBonus
+        val splashDamage = (actor.card.ability.power + actor.attackPowerBonus).coerceAtLeast(1)
+        val damagedEnemies = session.enemyUnits.map { enemy ->
+            when {
+                !enemy.isAlive -> enemy
+                enemy.instanceId == primaryTarget.instanceId -> takeDamage(enemy, primaryDamage)
+                else -> takeDamage(enemy, splashDamage)
+            }
+        }
+        val acted = actor.copy(hasActed = true)
+        val updated = session.copy(
+            playerUnits = session.playerUnits.replace(actor.instanceId, acted),
+            enemyUnits = damagedEnemies
+        )
+        val effects = buildList {
+            add(CombatEffect(CombatEffectType.ATTACK, actor.instanceId, primaryTarget.instanceId, abilityType = actor.card.ability.type))
+            damagedEnemies.forEach { enemy ->
+                val before = session.enemyUnits.first { it.instanceId == enemy.instanceId }
+                val loss = before.currentHealth - enemy.currentHealth
+                if (loss > 0) {
+                    add(CombatEffect(CombatEffectType.DAMAGE, actor.instanceId, enemy.instanceId, loss, actor.card.ability.type, "-$loss"))
+                }
+                if (before.isAlive && !enemy.isAlive) {
+                    add(CombatEffect(CombatEffectType.DEFEAT, actor.instanceId, enemy.instanceId, label = "Defeated"))
+                }
+            }
+        }
+        return ActionOutcome(
+            updated,
+            "${actor.card.name} used ${actor.card.ability.name} for $primaryDamage damage and splashed nearby enemies.",
             effects
         )
     }
@@ -218,32 +258,62 @@ class CombatManager(
                 if (livingPlayers.isNotEmpty()) {
                     val taunts = livingPlayers.filter { it.isTaunting }
                     val target = (taunts.ifEmpty { livingPlayers })[random.nextInt(taunts.ifEmpty { livingPlayers }.size)]
-                    val damaged = takeDamage(target, currentEnemy.damage)
-                    players = players.replace(target.instanceId, damaged)
-                    log += "${currentEnemy.card.name} hit ${target.card.name} for ${currentEnemy.damage}."
-                    val loss = target.currentHealth - damaged.currentHealth
                     effects += CombatEffect(
                         CombatEffectType.ATTACK,
                         sourceId = currentEnemy.instanceId,
                         targetId = target.instanceId,
                         amount = currentEnemy.damage
                     )
-                    if (loss > 0) {
-                        effects += CombatEffect(
-                            CombatEffectType.DAMAGE,
-                            sourceId = currentEnemy.instanceId,
-                            targetId = target.instanceId,
-                            amount = loss,
-                            label = "-$loss"
-                        )
-                    }
-                    if (target.isAlive && !damaged.isAlive) {
-                        effects += CombatEffect(
-                            CombatEffectType.DEFEAT,
-                            sourceId = currentEnemy.instanceId,
-                            targetId = target.instanceId,
-                            label = "Defeated"
-                        )
+                    if (currentEnemy.card.ability.type == AbilityType.SPLASH) {
+                        val splashDamage = currentEnemy.card.ability.power.coerceAtLeast(1)
+                        players = players.map { player ->
+                            if (!player.isAlive) player
+                            else takeDamage(player, if (player.instanceId == target.instanceId) currentEnemy.damage else splashDamage)
+                        }
+                        log += "${currentEnemy.card.name} swept the team for splash damage."
+                        players.forEach { player ->
+                            val before = livingPlayers.firstOrNull { it.instanceId == player.instanceId } ?: return@forEach
+                            val loss = before.currentHealth - player.currentHealth
+                            if (loss > 0) {
+                                effects += CombatEffect(
+                                    CombatEffectType.DAMAGE,
+                                    sourceId = currentEnemy.instanceId,
+                                    targetId = player.instanceId,
+                                    amount = loss,
+                                    label = "-$loss"
+                                )
+                            }
+                            if (before.isAlive && !player.isAlive) {
+                                effects += CombatEffect(
+                                    CombatEffectType.DEFEAT,
+                                    sourceId = currentEnemy.instanceId,
+                                    targetId = player.instanceId,
+                                    label = "Defeated"
+                                )
+                            }
+                        }
+                    } else {
+                        val damaged = takeDamage(target, currentEnemy.damage)
+                        players = players.replace(target.instanceId, damaged)
+                        log += "${currentEnemy.card.name} hit ${target.card.name} for ${currentEnemy.damage}."
+                        val loss = target.currentHealth - damaged.currentHealth
+                        if (loss > 0) {
+                            effects += CombatEffect(
+                                CombatEffectType.DAMAGE,
+                                sourceId = currentEnemy.instanceId,
+                                targetId = target.instanceId,
+                                amount = loss,
+                                label = "-$loss"
+                            )
+                        }
+                        if (target.isAlive && !damaged.isAlive) {
+                            effects += CombatEffect(
+                                CombatEffectType.DEFEAT,
+                                sourceId = currentEnemy.instanceId,
+                                targetId = target.instanceId,
+                                label = "Defeated"
+                            )
+                        }
                     }
                 }
             }
@@ -261,12 +331,33 @@ class CombatManager(
     }
 
     private fun createEnemies(round: Int): List<CombatUnit> {
-        val attackers = catalog.filter { it.combatRole == CombatRole.ATTACKER }
+        if (round in BOSS_ROUNDS) {
+            val boss = catalog.firstOrNull { it.id == BOSS_CARD_ID }
+                ?: error("Secret boss card is missing from the combat catalog.")
+            return listOf(createBossUnit(boss, round))
+        }
+        val attackers = catalog.filter { it.combatRole == CombatRole.ATTACKER && it.id != BOSS_CARD_ID }
         val count = (1 + (round - 1) / 2).coerceAtMost(3)
         val multiplier = enemyMultiplier(round)
         return attackers.shuffled(random).take(count).mapIndexed { index, card ->
             createEnemyUnit(card, multiplier, round, "enemy_${round}_${card.id}_$index")
         }
+    }
+
+    private fun createBossUnit(card: AnimalCard, round: Int): CombatUnit {
+        val tier = BOSS_ROUNDS.indexOf(round).coerceAtLeast(0) + 1
+        val health = card.health + tier * 12 + round
+        val damage = card.danger + tier * 5 + round / 2
+        return CombatUnit(
+            instanceId = "enemy_${round}_${card.id}_boss",
+            card = card,
+            maxHealth = health,
+            currentHealth = health,
+            damage = damage,
+            multiplier = tier.toDouble(),
+            frame = bossFrame(round, tier),
+            damageMitigation = tier
+        )
     }
 
     private fun createEnemyUnit(
@@ -344,6 +435,19 @@ class CombatManager(
         )
     }
 
+    private fun bossFrame(round: Int, tier: Int): CardFrame =
+        CardFrame(
+            id = "monitor_boss_$round",
+            name = "Secret Boss Frame",
+            borderStyle = "Boss tier $tier splash threat",
+            colorArgb = 0xFF30451F,
+            isUnlockedByDefault = false,
+            type = FrameType.APEX,
+            combatBonus = FrameCombatBonus(
+                description = "The Asian Water Monitor boss uses splash damage and tier $tier durability."
+            )
+        )
+
     private fun formatPercent(value: Double): String = "${floor(value * 100).toInt()}%"
 
     private fun takeDamage(unit: CombatUnit, amount: Int): CombatUnit {
@@ -368,4 +472,9 @@ class CombatManager(
         val session: CombatSession,
         val effects: List<CombatEffect>
     )
+
+    companion object {
+        const val BOSS_CARD_ID = "asian_water_monitor"
+        val BOSS_ROUNDS = listOf(10, 20, 30)
+    }
 }

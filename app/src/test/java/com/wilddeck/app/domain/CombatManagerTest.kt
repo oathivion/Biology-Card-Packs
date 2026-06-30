@@ -1,6 +1,8 @@
 package com.wilddeck.app.domain
 
 import com.wilddeck.app.data.SampleData
+import com.wilddeck.app.model.AbilityType
+import com.wilddeck.app.model.AnimalAbility
 import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatEffectType
 import org.junit.Assert.assertEquals
@@ -61,7 +63,7 @@ class CombatManagerTest {
     @Test
     fun enemiesGainRoundScalingFrameAfterRoundTenWithFloorRounding() {
         val lion = SampleData.animalCards.first { it.id == "lion" }
-        val manager = CombatManager(SampleData.animalCards, Random(10))
+        val manager = CombatManager(SampleData.combatCards, Random(10))
         var session = requireNotNull(manager.startRun(listOf(lion), 1.0))
 
         repeat(10) {
@@ -75,6 +77,44 @@ class CombatManagerTest {
         assertEquals((enemy.card.health * expectedMultiplier).toInt(), enemy.maxHealth)
         assertEquals((enemy.card.danger * expectedMultiplier).toInt(), enemy.damage)
         assertEquals("Enemy Scaling Frame", enemy.frame?.name)
+    }
+
+    @Test
+    fun monitorBossAppearsOnBossRoundsOnly() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }
+        val manager = CombatManager(SampleData.combatCards, Random(12))
+        var session = requireNotNull(manager.startRun(listOf(lion), 1.0))
+
+        repeat(9) {
+            session = manager.nextRound(session.copy(enemyUnits = emptyList()))
+        }
+
+        assertEquals(10, session.round)
+        assertEquals(listOf(CombatManager.BOSS_CARD_ID), session.enemyUnits.map { it.card.id })
+        assertTrue(session.enemyUnits.single().maxHealth >= 40)
+
+        val next = manager.nextRound(session.copy(enemyUnits = emptyList()))
+        assertTrue(next.enemyUnits.none { it.card.id == CombatManager.BOSS_CARD_ID })
+    }
+
+    @Test
+    fun splashAbilityDamagesMultipleEnemies() {
+        val monitor = SampleData.secretCards.first().copy(
+            danger = 30,
+            ability = AnimalAbility("test_splash", "Test Splash", AbilityType.SPLASH, "Splashes enemies.", 3)
+        )
+        val manager = CombatManager(SampleData.combatCards, Random(13))
+        var session = requireNotNull(manager.startRun(listOf(monitor), 1.0))
+        repeat(4) {
+            session = manager.nextRound(session.copy(enemyUnits = emptyList()))
+        }
+        val actor = session.playerUnits.single()
+        val target = session.enemyUnits.first()
+
+        val result = manager.act(session, actor.instanceId, target.instanceId)
+
+        assertTrue(result.session.enemyUnits.count { it.currentHealth < it.maxHealth } > 1)
+        assertTrue(result.effects.count { it.type == CombatEffectType.DAMAGE } > 1)
     }
 
     @Test

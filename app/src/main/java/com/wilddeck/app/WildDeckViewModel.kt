@@ -46,7 +46,7 @@ data class WildDeckUiState(
 )
 
 class WildDeckViewModel(application: Application) : AndroidViewModel(application) {
-    private val catalog = SampleData.animalCards.associateBy { it.id }
+    private val catalog = SampleData.combatCards.associateBy { it.id }
     private val dataStore = PlayerDataStore(application)
     private val loaded = dataStore.load()
     private val inventory = PlayerInventory(loaded.ownedCardIds)
@@ -59,7 +59,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     )
     private val levelingManager = CardLevelingManager(loaded.cardProgress)
     private val miniGameManager = MiniGameManager(SampleData.animalCards)
-    private val combatManager = CombatManager(SampleData.animalCards, frames = SampleData.frames)
+    private val combatManager = CombatManager(SampleData.combatCards, frames = SampleData.frames)
     private var previousMiniGameCardId: String? = null
     private var progressionPoints = loaded.progressionPoints
     private var reducedMotion = loaded.reducedMotion
@@ -151,6 +151,17 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
                 amount = xpAwards.maxOrNull() ?: baseXp,
                 label = xpLabel
             )
+            if (
+                current.round == 30 &&
+                current.enemyUnits.any { it.card.id == CombatManager.BOSS_CARD_ID } &&
+                inventory.addCard(CombatManager.BOSS_CARD_ID)
+            ) {
+                effects = effects + CombatEffect(
+                    CombatEffectType.CARD_UNLOCK,
+                    sourceId = CombatManager.BOSS_CARD_ID,
+                    label = "Card unlocked"
+                )
+            }
             val xpText = if (multipliers.values.any { it > 1.0 }) {
                 "$baseXp base XP, doubled by equipped Evolution Frames"
             } else {
@@ -294,7 +305,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         )
         dataStore.save(persisted)
         uiState = WildDeckUiState(
-            catalog = SampleData.animalCards.map { it.withProgress().withSelectedFrame() },
+            catalog = visibleCatalog().map { it.withProgress().withSelectedFrame() },
             ownedCards = inventory.getAll(catalog).map { it.withProgress().withSelectedFrame() },
             decks = deckManager.allDecks(),
             frames = frameManager.allFrames(),
@@ -324,6 +335,9 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         val battleFrameId = if (frameManager.isUnlocked(selectedFrameId)) selectedFrameId else defaultFrameId
         return copy(currentFrameId = battleFrameId)
     }
+
+    private fun visibleCatalog(): List<AnimalCard> =
+        SampleData.animalCards + SampleData.secretCards.filter { inventory.owns(it.id) }
 
     private fun formatMultiplier(value: Double): String =
         if (value % 1.0 == 0.0) value.toInt().toString() else "%.2f".format(value)

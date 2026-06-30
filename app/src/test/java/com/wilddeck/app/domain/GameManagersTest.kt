@@ -140,7 +140,7 @@ class GameManagersTest {
     fun everyAnimalHasHumanRelationshipLearningNotes() {
         val noteIds = SampleData.humanRelationshipNotes.keys
 
-        assertEquals(SampleData.animalCards.map { it.id }.toSet(), noteIds)
+        assertEquals(SampleData.combatCards.map { it.id }.toSet(), noteIds)
         SampleData.humanRelationshipNotes.values.forEach { note ->
             assertTrue(note.length > 120)
         }

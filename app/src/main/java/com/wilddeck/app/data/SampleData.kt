@@ -40,7 +40,18 @@ object SampleData {
         "goby" to AnimalAbility("watchman", "Watchman's Warning", AbilityType.DODGE,
             "Warns an ally of danger, granting a shield and drawing no attacks.", 2),
         "remora" to AnimalAbility("parasite_cleanup", "Parasite Cleanup", AbilityType.EMPOWER,
-            "Cleans an ally and raises both its damage and remaining health.", 2)
+            "Cleans an ally and raises both its damage and remaining health.", 2),
+        "asian_water_monitor" to AnimalAbility("tail_sweep", "Tail Sweep", AbilityType.SPLASH,
+            "A heavy tail strike splashes damage across the entire opposing team.", 2)
+    )
+
+    val secretCards = listOf(
+        AnimalCard("asian_water_monitor", "Asian Water Monitor", "Monitor lizard", 18, 16, "L",
+            "Asian water monitors are large, powerful lizards that swim well, climb well, and patrol wetland edges as opportunistic predators and scavengers.",
+            "Fish, birds, eggs, carrion, and small animals", "South and Southeast Asian wetlands, rivers, mangroves, and forests", CardRarity.LEGENDARY,
+            "A muscular body, tough scales, strong limbs, and a long tail make this monitor unusually durable.",
+            "Sharp teeth, claws, a powerful tail, and confident defensive behavior make close contact risky.",
+            ability = abilities.getValue("asian_water_monitor"))
     )
 
     val animalCards = listOf(
@@ -115,6 +126,8 @@ object SampleData {
             "A flexible body and moderate size provide limited durability.",
             "Remoras are not aggressive and present little danger to people.")
     ).map { card -> card.copy(ability = abilities.getValue(card.id)) } + ExpandedAnimalData.cards
+
+    val combatCards = animalCards + secretCards
 
     val frames = listOf(
         CardFrame("black", "Black Border", "Classic", 0xFF171717, true,
@@ -289,5 +302,7 @@ object SampleData {
         "pistol_shrimp" to "Pistol shrimp are small, but they matter to people through science and reef ecology. Their snapping claw is a natural example of extreme speed, sound production, and cavitation, which makes them fascinating for physics and biology education. In reef and seabed habitats, their burrowing and partnerships with gobies also help create shelter and structure used by other small marine animals.",
         "goby" to "Watchman gobies help people understand cooperation in nature because their partnership with pistol shrimp is easy to observe in reefs and aquariums. They are part of the small-animal communities that keep reef sand habitats active and biodiverse. For humans, gobies also highlight why protecting reefs means protecting more than colorful corals; the small burrow-builders and lookout fish are part of the system too.",
         "remora" to "Remoras have long interested people because of their unusual suction disc and their habit of riding sharks, rays, turtles, and whales. They usually do little harm to hosts, making them a clear example of commensalism for students and divers. Their lifestyle also reminds people that large marine animals act like moving habitats, carrying smaller species through the ocean and connecting food opportunities."
-    ) + ExpandedAnimalData.humanRelationshipNotes
+    ) + ExpandedAnimalData.humanRelationshipNotes + mapOf(
+        "asian_water_monitor" to "Asian water monitors live close to people in many parts of South and Southeast Asia, especially near canals, rivers, farms, and cities. They help clean ecosystems by scavenging carrion and also hunt many smaller animals, but their size can make encounters startling. Coexistence depends on giving large reptiles space, protecting wetland habitat, and understanding that these monitors are native wildlife rather than pests."
+    )
 }

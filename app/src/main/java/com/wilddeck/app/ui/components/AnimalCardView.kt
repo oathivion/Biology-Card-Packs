@@ -120,19 +120,11 @@ fun AnimalCardView(
                     .testTag("animal_image_${card.id}"),
                 contentAlignment = Alignment.Center
             ) {
-                if (compact) {
-                    Text(
-                        text = card.imageEmoji,
-                        fontSize = 58.sp,
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    AnimalPhoto(
-                        card = card,
-                        modifier = Modifier.fillMaxSize(),
-                        fallbackFontSize = 92.sp
-                    )
-                }
+                AnimalPhoto(
+                    card = card,
+                    modifier = Modifier.fillMaxSize(),
+                    fallbackFontSize = if (compact) 58.sp else 92.sp
+                )
             }
             Spacer(Modifier.height(8.dp))
             Column(

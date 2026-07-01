@@ -45,6 +45,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -396,10 +397,15 @@ private fun DeckIconStack(deck: Deck?, ownedCards: List<AnimalCard>, onClick: ()
                         .padding(start = (cardIndex * 7).dp, top = (cardIndex * 5).dp)
                         .size(width = 42.dp, height = 58.dp)
                         .background(Color.White.copy(alpha = 0.92f), RoundedCornerShape(8.dp))
-                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp)),
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(8.dp)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(card.imageEmoji, style = MaterialTheme.typography.headlineSmall)
+                    AnimalPhoto(
+                        card = card,
+                        modifier = Modifier.fillMaxSize(),
+                        fallbackFontSize = MaterialTheme.typography.headlineSmall.fontSize
+                    )
                 }
             }
         }

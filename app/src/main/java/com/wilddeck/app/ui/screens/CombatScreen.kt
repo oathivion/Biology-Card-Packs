@@ -278,7 +278,11 @@ private fun CombatDeckIconStack(cards: List<AnimalCard>) {
                     shadowElevation = 2.dp
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Text(card.imageEmoji, fontSize = 18.sp)
+                        AnimalPhoto(
+                            card = card,
+                            modifier = Modifier.fillMaxSize().clip(RoundedCornerShape(10.dp)),
+                            fallbackFontSize = 18.sp
+                        )
                     }
                 }
             }
@@ -732,7 +736,19 @@ private fun CombatTile(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceEvenly
             ) {
-                Text(unit.card.imageEmoji, fontSize = 27.sp)
+                Box(
+                    Modifier
+                        .size(width = 54.dp, height = 42.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center
+                ) {
+                    AnimalPhoto(
+                        card = unit.card,
+                        modifier = Modifier.fillMaxSize(),
+                        fallbackFontSize = 27.sp
+                    )
+                }
                 Text(unit.card.name, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2,
                     style = MaterialTheme.typography.labelMedium)
                 LinearProgressIndicator(

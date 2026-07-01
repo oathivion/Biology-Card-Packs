@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -45,6 +46,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -54,6 +57,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
+import com.wilddeck.app.R
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
@@ -268,14 +272,16 @@ private fun MetalShineBackground(content: @Composable () -> Unit) {
 @Composable
 private fun PredatorEyesBackground(content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().background(Color.Black)) {
-        Canvas(Modifier.fillMaxSize()) {
-            val eyeY = size.height * 0.14f
-            val gap = size.width * 0.14f
-            listOf(size.width / 2f - gap, size.width / 2f + gap).forEach { x ->
-                drawCircle(Color(0xFFFF1E1E).copy(alpha = 0.95f), radius = 13f, center = Offset(x, eyeY))
-                drawCircle(Color(0xFFFF5A5A).copy(alpha = 0.35f), radius = 30f, center = Offset(x, eyeY))
-            }
-        }
+        Image(
+            painter = painterResource(R.drawable.wilddecks_logo_final),
+            contentDescription = "WildDeck logo",
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .padding(top = 22.dp, start = 10.dp, end = 10.dp)
+                .fillMaxWidth()
+                .height(150.dp),
+            contentScale = ContentScale.Fit
+        )
         CompositionLocalProvider(LocalContentColor provides Color.White) {
             content()
         }

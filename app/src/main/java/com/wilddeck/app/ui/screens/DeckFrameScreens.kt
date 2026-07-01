@@ -7,6 +7,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -32,6 +33,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,8 +46,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.wilddeck.app.R
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.Deck
@@ -414,8 +421,11 @@ fun FrameStoreScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text("Frame Store", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            FinFramesHeader(points)
+            if (false) Text("Frame Store", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+            if (false) {
             Text("$points points available · Frames add Wild Run bonuses.")
+        }
         }
         items(frames, key = { it.id }) { frame ->
             val unlocked = frame.id in unlockedFrameIds
@@ -560,7 +570,49 @@ private fun keywordColor(keyword: String): Color =
         "balanced" -> Color(0xFF1565C0)
         "apex" -> Color(0xFFE65100)
         else -> Color.Unspecified
+}
+
+@Composable
+private fun FinFramesHeader(points: Int) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .height(230.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(R.drawable.wilddecks_fin_final),
+            contentDescription = "Fin presenting the frame shop",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Fit
+        )
+        Surface(
+            color = Color(0xFF1B0C06).copy(alpha = 0.72f),
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(top = 72.dp)
+        ) {
+            Column(
+                Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    "Fin's Frames",
+                    fontFamily = FontFamily.Cursive,
+                    fontSize = 36.sp,
+                    fontWeight = FontWeight.Black,
+                    color = Color(0xFFFFD36B)
+                )
+                Text(
+                    "$points points available",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White
+                )
+            }
+        }
     }
+}
 
 @Composable
 private fun BubbleShopBackground() {

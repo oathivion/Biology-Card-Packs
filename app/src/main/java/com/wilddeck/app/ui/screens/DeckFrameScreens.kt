@@ -586,21 +586,16 @@ private fun FinFramesHeader(points: Int) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Fit
         )
-        Surface(
-            color = Color(0xFF1B0C06).copy(alpha = 0.72f),
-            shape = RoundedCornerShape(18.dp),
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(top = 72.dp)
+                .padding(top = 88.dp)
         ) {
-            Column(
-                Modifier.padding(horizontal = 18.dp, vertical = 8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
                 Text(
                     "Fin's Frames",
                     fontFamily = FontFamily.Cursive,
-                    fontSize = 36.sp,
+                    fontSize = 40.sp,
                     fontWeight = FontWeight.Black,
                     color = Color(0xFFFFD36B)
                 )
@@ -609,7 +604,6 @@ private fun FinFramesHeader(points: Int) {
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.White
                 )
-            }
         }
     }
 }

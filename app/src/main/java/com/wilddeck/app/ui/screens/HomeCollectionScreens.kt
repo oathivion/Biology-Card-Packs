@@ -53,9 +53,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.wilddeck.app.R
 import com.wilddeck.app.model.AnimalCard
@@ -150,9 +152,6 @@ private fun PlayLanding(
         Modifier.fillMaxSize().padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Text("WILDDECK", style = MaterialTheme.typography.displaySmall, fontWeight = FontWeight.Black)
-        Text("Choose your next expedition.", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             StatSummary("$ownedCount", "cards", Modifier.weight(1f))
             StatSummary("$deckCount/5", "decks", Modifier.weight(1f))
@@ -160,9 +159,6 @@ private fun PlayLanding(
         }
         Spacer(Modifier.height(22.dp))
         HomeButton("WILD RUN", "Battle with your deck and earn progression points", onCombat)
-        Spacer(Modifier.height(20.dp))
-        Text("Swipe left or right for decks, cards, frames, and more.", textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(), style = MaterialTheme.typography.bodySmall)
     }
 }
 
@@ -277,7 +273,7 @@ private fun PredatorEyesBackground(content: @Composable () -> Unit) {
             contentDescription = "WildDeck logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 22.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 44.dp, start = 10.dp, end = 10.dp)
                 .fillMaxWidth()
                 .height(150.dp),
             contentScale = ContentScale.Fit
@@ -667,9 +663,17 @@ private fun StatSummary(value: String, label: String, modifier: Modifier = Modif
 @Composable
 private fun HomeButton(title: String, subtitle: String, onClick: () -> Unit) {
     Button(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-            Text(title, fontWeight = FontWeight.Bold)
-            Text(subtitle, style = MaterialTheme.typography.bodySmall)
+        Column(
+            Modifier.fillMaxWidth().padding(vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                title,
+                fontFamily = FontFamily.Cursive,
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }

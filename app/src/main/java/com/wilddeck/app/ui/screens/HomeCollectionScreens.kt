@@ -669,9 +669,10 @@ private fun HomeButton(title: String, subtitle: String, onClick: () -> Unit) {
         ) {
             Text(
                 title,
-                fontFamily = FontFamily.Cursive,
-                fontSize = 34.sp,
-                fontWeight = FontWeight.Black,
+                fontFamily = FontFamily.Serif,
+                fontSize = 38.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 3.sp,
                 textAlign = TextAlign.Center
             )
         }

@@ -41,6 +41,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -48,6 +49,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -823,12 +825,6 @@ private fun WildRunBackground(
         animationSpec = infiniteRepeatable(tween(6200), RepeatMode.Restart),
         label = "wild-run-motion"
     )
-    val lineMotion by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = if (reducedMotion) 0.45f else 1f,
-        animationSpec = infiniteRepeatable(tween(2600), RepeatMode.Restart),
-        label = "wild-run-line"
-    )
     Box(Modifier.fillMaxSize()) {
         Canvas(
             Modifier
@@ -865,22 +861,6 @@ private fun WildRunBackground(
                 }
             }
 
-            val lineY = size.height + 140f - lineMotion * (size.height + 280f)
-            drawLine(
-                color = Color.White.copy(alpha = 0.48f),
-                start = Offset(size.width * 0.52f, lineY + 180f),
-                end = Offset(size.width * 0.52f, lineY - 180f),
-                strokeWidth = 5f,
-                cap = StrokeCap.Round
-            )
-            drawLine(
-                color = Color.White.copy(alpha = 0.14f),
-                start = Offset(size.width * 0.52f, lineY + 230f),
-                end = Offset(size.width * 0.52f, lineY - 230f),
-                strokeWidth = 15f,
-                cap = StrokeCap.Round
-            )
-
             repeat(if (reducedMotion) 10 else 42) { index ->
                 val emberPhase = (motion + index * 0.041f) % 1f
                 val x = size.width * ((index * 37 % 101) / 101f)
@@ -888,18 +868,20 @@ private fun WildRunBackground(
                 val y = size.height + 24f - emberPhase * (size.height + 80f)
                 val radiusScale = 2f + (index % 5) * 0.9f
                 drawCircle(
-                    color = Color(0xFFFF8B35).copy(alpha = (1f - emberPhase) * 0.58f + 0.10f),
+                    color = Color(0xFFFF2400).copy(alpha = (1f - emberPhase) * 0.62f + 0.12f),
                     radius = radiusScale,
                     center = Offset(x + sway, y)
                 )
                 drawCircle(
-                    color = Color(0xFFFFD17A).copy(alpha = (1f - emberPhase) * 0.22f),
+                    color = Color(0xFFFF4D5D).copy(alpha = (1f - emberPhase) * 0.28f),
                     radius = radiusScale * 2.2f,
                     center = Offset(x + sway, y)
                 )
             }
         }
-        content()
+        CompositionLocalProvider(LocalContentColor provides Color.White) {
+            content()
+        }
     }
 }
 

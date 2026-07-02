@@ -204,6 +204,8 @@ fun MiniGameScreen(
             if (points < entryCost) {
                 Text("Clear a Wild Run round to earn an entry point.")
             }
+            Spacer(Modifier.height(28.dp))
+            AnimalTriviaCredits()
         }
         return
     }
@@ -267,6 +269,28 @@ fun MiniGameScreen(
                     Text(option, modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
+        }
+        AnimalTriviaCredits()
+    }
+}
+
+@Composable
+private fun AnimalTriviaCredits(modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            Modifier.padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(5.dp)
+        ) {
+            Text("Credits", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+            Text("Alwin Brauns - Bumbumchack")
+            Text("Glitch - Panacea")
+            Text("Glitch - Medusa")
+            Text("Glitch - Mare Tranquillitatis")
+            Text("Brian Ritchie - WildDecks Devlopment")
         }
     }
 }

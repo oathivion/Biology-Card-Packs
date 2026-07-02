@@ -180,7 +180,8 @@ fun MiniGameScreen(
     entryCost: Int,
     onStart: () -> Unit,
     onAnswer: (String) -> Unit,
-    onCollection: () -> Unit
+    onCollection: () -> Unit,
+    onCredits: () -> Unit
 ) {
     if (session == null || frame == null) {
         Column(
@@ -205,7 +206,9 @@ fun MiniGameScreen(
                 Text("Clear a Wild Run round to earn an entry point.")
             }
             Spacer(Modifier.height(28.dp))
-            AnimalTriviaCredits()
+            OutlinedButton(onClick = onCredits, modifier = Modifier.fillMaxWidth()) {
+                Text("Credits")
+            }
         }
         return
     }
@@ -270,27 +273,39 @@ fun MiniGameScreen(
                 }
             }
         }
-        AnimalTriviaCredits()
+        OutlinedButton(onClick = onCredits, modifier = Modifier.fillMaxWidth()) {
+            Text("Credits")
+        }
     }
 }
 
 @Composable
-private fun AnimalTriviaCredits(modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
-        shape = RoundedCornerShape(16.dp)
+fun CreditsScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(
-            Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
+        Text("Credits", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
+        Text(
+            "Animal Trivia and WildDecks audio credits.",
+            style = MaterialTheme.typography.bodyLarge
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
+            shape = RoundedCornerShape(16.dp)
         ) {
-            Text("Credits", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-            Text("Alwin Brauns - Bumbumchack")
-            Text("Glitch - Panacea")
-            Text("Glitch - Medusa")
-            Text("Glitch - Mare Tranquillitatis")
-            Text("Brian Ritchie - WildDecks Devlopment")
+            Column(
+                Modifier.padding(18.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("Alwin Brauns - Bumbumchack")
+                Text("Glitch - Panacea")
+                Text("Glitch - Medusa")
+                Text("Glitch - Mare Tranquillitatis")
+                Text("Brian Ritchie - WildDecks Devlopment")
+            }
         }
     }
 }

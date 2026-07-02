@@ -36,6 +36,7 @@ import com.wilddeck.app.domain.MiniGameManager
 import com.wilddeck.app.model.CombatEffectType
 import com.wilddeck.app.ui.screens.CardDetailScreen
 import com.wilddeck.app.ui.screens.CollectionScreen
+import com.wilddeck.app.ui.screens.CreditsScreen
 import com.wilddeck.app.ui.screens.DeckBuilderScreen
 import com.wilddeck.app.ui.screens.FrameCustomizationScreen
 import com.wilddeck.app.ui.screens.FrameStoreScreen
@@ -63,6 +64,7 @@ private object Routes {
     const val DECKS = "decks"
     const val GAME = "game"
     const val COMBAT = "combat"
+    const val CREDITS = "credits"
     const val DETAIL = "detail/{cardId}"
     const val FRAMES = "frames?cardId={cardId}"
     const val FRAME_STORE = "frame_store"
@@ -282,8 +284,15 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onCollection = {
                         audio.play(WildDeckAudioController.Effect.EXTRA_3)
                         navController.navigate(Routes.COLLECTION)
+                    },
+                    onCredits = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.CREDITS)
                     }
                 )
+            }
+            composable(Routes.CREDITS) {
+                CreditsScreen()
             }
             composable(Routes.COMBAT) {
                 CombatScreen(
@@ -389,6 +398,7 @@ private fun screenTitle(route: String?): String = when (route) {
     Routes.COLLECTION -> "Collection"
     Routes.DECKS -> "Deck Builder"
     Routes.GAME -> "Mini Game"
+    Routes.CREDITS -> "Credits"
     Routes.COMBAT -> "Wild Run"
     Routes.DETAIL -> "Card Details"
     Routes.FRAMES -> "Frame Workshop"

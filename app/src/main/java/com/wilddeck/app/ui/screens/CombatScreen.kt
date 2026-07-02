@@ -1,7 +1,5 @@
 package com.wilddeck.app.ui.screens
 
-import android.media.AudioManager
-import android.media.ToneGenerator
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -50,7 +48,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -114,6 +111,7 @@ fun CombatScreen(
     onNextRound: () -> Unit,
     onEndRun: () -> Unit,
     onUnlockFrame: (String) -> Unit,
+    onCardHoldSound: () -> Unit,
     onReducedMotion: (Boolean) -> Unit,
     onSound: (Boolean) -> Unit,
     onHaptics: (Boolean) -> Unit
@@ -126,7 +124,7 @@ fun CombatScreen(
     } else {
         CombatBoard(
             session, effects, effectSequence, points, reducedMotion, soundEnabled, hapticsEnabled,
-            onAction, onNextRound, onEndRun
+            onAction, onNextRound, onEndRun, onCardHoldSound
         )
     }
 }
@@ -313,19 +311,18 @@ private fun CombatBoard(
     hapticsEnabled: Boolean,
     onAction: (String, String) -> Unit,
     onNextRound: () -> Unit,
-    onEndRun: () -> Unit
+    onEndRun: () -> Unit,
+    onCardHoldSound: () -> Unit
 ) {
     val targetBounds = remember { mutableStateMapOf<String, Rect>() }
     var inspectedUnit by remember { mutableStateOf<CombatUnit?>(null) }
     var activeEffects by remember { mutableStateOf(emptyList<CombatEffect>()) }
     val haptics = LocalHapticFeedback.current
-    val tone = remember { ToneGenerator(AudioManager.STREAM_MUSIC, 55) }
     val enemyAnimationActive = activeEffects.any {
         it.sourceId?.startsWith("enemy_") == true &&
             it.targetId?.startsWith("player_") == true &&
             it.type in setOf(CombatEffectType.ATTACK, CombatEffectType.DAMAGE)
     }
-    DisposableEffect(Unit) { onDispose { tone.release() } }
 
     LaunchedEffect(effectSequence) {
         if (effects.isEmpty()) return@LaunchedEffect
@@ -335,9 +332,6 @@ private fun CombatBoard(
                 if (effects.any { it.type == CombatEffectType.DAMAGE || it.type == CombatEffectType.DEFEAT })
                     HapticFeedbackType.LongPress else HapticFeedbackType.TextHandleMove
             )
-        }
-        if (soundEnabled) {
-            tone.startTone(toneFor(effects), if (reducedMotion) 80 else 180)
         }
         val hasEnemyAttackAnimation = effects.any {
             it.sourceId?.startsWith("enemy_") == true &&
@@ -387,7 +381,10 @@ private fun CombatBoard(
                 activeEffects = activeEffects,
                 targetBounds = targetBounds,
                 reducedMotion = reducedMotion,
-                onInspect = { inspectedUnit = it },
+                onInspect = {
+                    onCardHoldSound()
+                    inspectedUnit = it
+                },
                 modifier = Modifier.weight(1f)
             )
 
@@ -412,7 +409,10 @@ private fun CombatBoard(
                                 effects.none { it.type == CombatEffectType.ROUND_CLEAR } && !enemyAnimationActive,
                             reducedMotion = reducedMotion,
                             onDrop = { targetId -> onAction(unit.instanceId, targetId) },
-                            onInspect = { inspectedUnit = unit },
+                            onInspect = {
+                                onCardHoldSound()
+                                inspectedUnit = unit
+                            },
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxSize()
@@ -1082,15 +1082,6 @@ private fun animalEffectGlyph(animalId: String, type: AbilityType?): String = wh
         AbilityType.SHIELD -> "◈"
         else -> "✹"
     }
-}
-
-private fun toneFor(effects: List<CombatEffect>): Int = when {
-    effects.any { it.type == CombatEffectType.ROUND_CLEAR || it.type == CombatEffectType.POINT } ->
-        ToneGenerator.TONE_PROP_ACK
-    effects.any { it.type == CombatEffectType.HEAL || it.type == CombatEffectType.SHIELD } ->
-        ToneGenerator.TONE_PROP_BEEP2
-    effects.any { it.type == CombatEffectType.DEFEAT } -> ToneGenerator.TONE_PROP_NACK
-    else -> ToneGenerator.TONE_PROP_BEEP
 }
 
 private fun formatCombatMultiplier(value: Double): String =

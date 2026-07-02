@@ -17,9 +17,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -27,8 +30,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.wilddeck.app.audio.WildDeckAudioController
 import com.wilddeck.app.data.SampleData
 import com.wilddeck.app.domain.MiniGameManager
+import com.wilddeck.app.model.CombatEffectType
 import com.wilddeck.app.ui.screens.CardDetailScreen
 import com.wilddeck.app.ui.screens.CollectionScreen
 import com.wilddeck.app.ui.screens.DeckBuilderScreen
@@ -71,6 +76,8 @@ private object Routes {
 fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
     val state = viewModel.uiState
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val audio = remember { WildDeckAudioController(context) }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
     val isHome = currentRoute == Routes.HOME
@@ -80,6 +87,49 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
         state.catalog.associate { card ->
             card.id to manager.createQuestions(card)
                 .sortedWith(compareBy({ it.difficulty.ordinal }, { it.id }))
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { audio.release() }
+    }
+
+    LaunchedEffect(state.soundEnabled) {
+        audio.setEnabled(state.soundEnabled)
+    }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute == Routes.COMBAT) {
+            audio.playBattleMusic()
+        } else {
+            audio.playMainTheme()
+        }
+    }
+
+    LaunchedEffect(state.combatEffectSequence) {
+        if (state.combatEffects.isEmpty()) return@LaunchedEffect
+        when {
+            state.combatEffects.any {
+                it.type == CombatEffectType.ATTACK && it.sourceId?.startsWith("player_") == true
+            } -> audio.play(WildDeckAudioController.Effect.PLAYER_ATTACK)
+            state.combatEffects.any {
+                it.type == CombatEffectType.DAMAGE && it.sourceId?.startsWith("enemy_") == true
+            } -> audio.play(WildDeckAudioController.Effect.ENEMY_DAMAGE)
+            state.combatEffects.any { it.type == CombatEffectType.ROUND_CLEAR } ->
+                audio.play(WildDeckAudioController.Effect.EXTRA_1)
+            state.combatEffects.any { it.type == CombatEffectType.POINT } ->
+                audio.play(WildDeckAudioController.Effect.EXTRA_2)
+            state.combatEffects.any { it.type == CombatEffectType.DEFEAT } ->
+                audio.play(WildDeckAudioController.Effect.EXTRA_3)
+        }
+    }
+
+    LaunchedEffect(state.miniGameFeedback) {
+        state.miniGameFeedback?.let { feedback ->
+            audio.play(
+                if (feedback.contains("correct", ignoreCase = true)) WildDeckAudioController.Effect.EXTRA_1
+                else WildDeckAudioController.Effect.EXTRA_2
+            )
         }
     }
 
@@ -190,6 +240,7 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onNextRound = viewModel::nextCombatRound,
                     onEndRun = viewModel::endCombatRun,
                     onUnlockFrame = viewModel::unlockFrame,
+                    onCardHoldSound = { audio.play(WildDeckAudioController.Effect.TOUCH_HOLD_CARD) },
                     onReducedMotion = viewModel::setReducedMotion,
                     onSound = viewModel::setSoundEnabled,
                     onHaptics = viewModel::setHapticsEnabled

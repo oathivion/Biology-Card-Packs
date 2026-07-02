@@ -59,8 +59,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -92,6 +95,7 @@ import kotlin.math.absoluteValue
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.math.sqrt
 
 @Composable
 fun CombatScreen(
@@ -146,6 +150,7 @@ private fun CombatLobby(
     onHaptics: (Boolean) -> Unit
 ) {
     val cardsById = ownedCards.associateBy { it.id }
+    WildRunBackground(reducedMotion = reducedMotion) {
     Column(
         Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -220,6 +225,7 @@ private fun CombatLobby(
             modifier = Modifier.fillMaxWidth()
         ) { Text("Use first ${minOf(5, ownedCards.size)} collected creatures") }
         if (ownedCards.isEmpty()) Text("Earn your first creature through Animal Trivia to begin.")
+    }
     }
 }
 
@@ -352,8 +358,7 @@ private fun CombatBoard(
         activeEffects = emptyList()
     }
 
-    Box(Modifier.fillMaxSize()) {
-        BiomeBackground(session, reducedMotion)
+    WildRunBackground(reducedMotion = reducedMotion) {
         Column(
             Modifier.fillMaxSize().padding(10.dp),
             verticalArrangement = Arrangement.spacedBy(5.dp)
@@ -803,6 +808,98 @@ private fun EffectVisual(effect: CombatEffect?, animalId: String, reducedMotion:
                 else -> Unit
             }
         }
+    }
+}
+
+@Composable
+private fun WildRunBackground(
+    reducedMotion: Boolean,
+    content: @Composable () -> Unit
+) {
+    val transition = rememberInfiniteTransition(label = "wild-run-bg")
+    val motion by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = if (reducedMotion) 0f else 1f,
+        animationSpec = infiniteRepeatable(tween(6200), RepeatMode.Restart),
+        label = "wild-run-motion"
+    )
+    val lineMotion by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = if (reducedMotion) 0.45f else 1f,
+        animationSpec = infiniteRepeatable(tween(2600), RepeatMode.Restart),
+        label = "wild-run-line"
+    )
+    Box(Modifier.fillMaxSize()) {
+        Canvas(
+            Modifier
+                .fillMaxSize()
+                .background(Color(0xFF24272C))
+        ) {
+            drawRect(
+                Brush.verticalGradient(
+                    listOf(Color(0xFF15171A), Color(0xFF3D4148), Color(0xFF1B1D20))
+                )
+            )
+
+            val radius = 42f
+            val hexHeight = sqrt(3f) * radius
+            val cols = (size.width / (radius * 1.5f)).toInt() + 4
+            val rows = (size.height / hexHeight).toInt() + 4
+            repeat(cols) { col ->
+                repeat(rows) { row ->
+                    val centerX = col * radius * 1.5f - radius
+                    val centerY = row * hexHeight + if (col % 2 == 0) 0f else hexHeight / 2f
+                    val path = Path()
+                    repeat(6) { point ->
+                        val angle = Math.toRadians((60 * point - 30).toDouble())
+                        val x = centerX + cos(angle).toFloat() * radius
+                        val y = centerY + sin(angle).toFloat() * radius
+                        if (point == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    path.close()
+                    drawPath(
+                        path = path,
+                        color = Color.White.copy(alpha = if ((row + col) % 3 == 0) 0.085f else 0.045f),
+                        style = Stroke(width = 1.6f)
+                    )
+                }
+            }
+
+            val lineY = size.height + 140f - lineMotion * (size.height + 280f)
+            drawLine(
+                color = Color.White.copy(alpha = 0.48f),
+                start = Offset(size.width * 0.52f, lineY + 180f),
+                end = Offset(size.width * 0.52f, lineY - 180f),
+                strokeWidth = 5f,
+                cap = StrokeCap.Round
+            )
+            drawLine(
+                color = Color.White.copy(alpha = 0.14f),
+                start = Offset(size.width * 0.52f, lineY + 230f),
+                end = Offset(size.width * 0.52f, lineY - 230f),
+                strokeWidth = 15f,
+                cap = StrokeCap.Round
+            )
+
+            repeat(if (reducedMotion) 10 else 42) { index ->
+                val emberPhase = (motion + index * 0.041f) % 1f
+                val x = size.width * ((index * 37 % 101) / 101f)
+                val sway = sin((emberPhase * 6.28f) + index) * 26f
+                val y = size.height + 24f - emberPhase * (size.height + 80f)
+                val radiusScale = 2f + (index % 5) * 0.9f
+                drawCircle(
+                    color = Color(0xFFFF8B35).copy(alpha = (1f - emberPhase) * 0.58f + 0.10f),
+                    radius = radiusScale,
+                    center = Offset(x + sway, y)
+                )
+                drawCircle(
+                    color = Color(0xFFFFD17A).copy(alpha = (1f - emberPhase) * 0.22f),
+                    radius = radiusScale * 2.2f,
+                    center = Offset(x + sway, y)
+                )
+            }
+        }
+        content()
     }
 }
 

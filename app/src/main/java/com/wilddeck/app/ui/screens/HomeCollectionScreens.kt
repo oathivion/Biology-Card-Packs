@@ -53,6 +53,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.font.FontWeight
@@ -267,6 +268,13 @@ private fun MetalShineBackground(content: @Composable () -> Unit) {
 
 @Composable
 private fun PredatorEyesBackground(content: @Composable () -> Unit) {
+    val transition = rememberInfiniteTransition(label = "main-rain")
+    val rain by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1150, easing = LinearEasing), RepeatMode.Restart),
+        label = "rain-fall"
+    )
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         Image(
             painter = painterResource(R.drawable.wilddecks_logo_final),
@@ -278,6 +286,21 @@ private fun PredatorEyesBackground(content: @Composable () -> Unit) {
                 .height(180.dp),
             contentScale = ContentScale.FillWidth
         )
+        Canvas(Modifier.fillMaxSize()) {
+            repeat(34) { index ->
+                val x = size.width * ((index * 29 % 97) / 97f)
+                val y = ((rain + index * 0.047f) % 1f) * (size.height + 140f) - 90f
+                val length = 34f + (index % 4) * 12f
+                val wind = 10f + (index % 3) * 5f
+                drawLine(
+                    color = Color(0xFF9FB6C8).copy(alpha = 0.18f),
+                    start = Offset(x + wind, y),
+                    end = Offset(x, y + length),
+                    strokeWidth = 1.8f,
+                    cap = StrokeCap.Round
+                )
+            }
+        }
         CompositionLocalProvider(LocalContentColor provides Color.White) {
             content()
         }

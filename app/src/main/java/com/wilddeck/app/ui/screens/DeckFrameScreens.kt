@@ -577,27 +577,27 @@ private fun FinFramesHeader(points: Int) {
     Box(
         Modifier
             .fillMaxWidth()
-            .height(230.dp),
+            .height(285.dp),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(R.drawable.wilddecks_fin_final),
             contentDescription = "Fin presenting the frame shop",
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Fit
+            modifier = Modifier.fillMaxWidth().height(285.dp),
+            contentScale = ContentScale.FillWidth
         )
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .align(Alignment.Center)
-                .padding(top = 88.dp)
+                .padding(top = 104.dp)
         ) {
                 Text(
-                    "Fin's Frames",
+                    "Fins Frames",
                     fontFamily = FontFamily.Cursive,
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Black,
-                    color = Color(0xFFFFD36B)
+                    color = Color.Black
                 )
                 Text(
                     "$points points available",

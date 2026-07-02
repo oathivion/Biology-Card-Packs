@@ -273,10 +273,10 @@ private fun PredatorEyesBackground(content: @Composable () -> Unit) {
             contentDescription = "WildDeck logo",
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 44.dp, start = 10.dp, end = 10.dp)
+                .padding(top = 82.dp)
                 .fillMaxWidth()
-                .height(150.dp),
-            contentScale = ContentScale.Fit
+                .height(180.dp),
+            contentScale = ContentScale.FillWidth
         )
         CompositionLocalProvider(LocalContentColor provides Color.White) {
             content()

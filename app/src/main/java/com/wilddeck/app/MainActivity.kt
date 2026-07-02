@@ -22,9 +22,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.changedToDown
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -111,13 +108,19 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
 
     LaunchedEffect(state.combatEffectSequence) {
         if (state.combatEffects.isEmpty()) return@LaunchedEffect
-        when {
-            state.combatEffects.any {
-                it.type == CombatEffectType.ATTACK && it.sourceId?.startsWith("player_") == true
-            } -> audio.play(WildDeckAudioController.Effect.PLAYER_ATTACK)
-            state.combatEffects.any {
+        if (state.combatEffects.any {
+                it.type == CombatEffectType.ATTACK && it.sourceId?.startsWith("enemy_") == true
+            } || state.combatEffects.any {
                 it.type == CombatEffectType.DAMAGE && it.sourceId?.startsWith("enemy_") == true
-            } -> audio.play(WildDeckAudioController.Effect.ENEMY_DAMAGE)
+            }) {
+            audio.play(WildDeckAudioController.Effect.ENEMY_DAMAGE)
+        }
+        if (state.combatEffects.any {
+                it.type == CombatEffectType.ATTACK && it.sourceId?.startsWith("player_") == true
+            }) {
+            audio.play(WildDeckAudioController.Effect.PLAYER_ATTACK)
+        }
+        when {
             state.combatEffects.any { it.type == CombatEffectType.ROUND_CLEAR } ->
                 audio.play(WildDeckAudioController.Effect.EXTRA_1)
             state.combatEffects.any { it.type == CombatEffectType.POINT } ->
@@ -142,7 +145,10 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                 TopAppBar(
                     title = { Text(screenTitle(currentRoute)) },
                     navigationIcon = {
-                        TextButton(onClick = { navController.popBackStack() }) { Text("← Back") }
+                        TextButton(onClick = {
+                            audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                            navController.popBackStack()
+                        }) { Text("← Back") }
                     }
                 )
             }
@@ -151,18 +157,7 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
         NavHost(
             navController = navController,
             startDestination = Routes.HOME,
-            modifier = Modifier
-                .padding(innerPadding)
-                .pointerInput(audio) {
-                    awaitPointerEventScope {
-                        while (true) {
-                            val event = awaitPointerEvent(PointerEventPass.Initial)
-                            if (event.changes.any { it.changedToDown() }) {
-                                audio.play(WildDeckAudioController.Effect.EXTRA_3)
-                            }
-                        }
-                    }
-                },
+            modifier = Modifier.padding(innerPadding),
             enterTransition = {
                 if (state.reducedMotion) EnterTransition.None else fadeIn() + slideInHorizontally { it / 5 }
             },
@@ -191,14 +186,38 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     frameCost = viewModel::frameUnlockCost,
                     learningTriviaByCardId = learningTriviaByCardId,
                     humanRelationshipNotes = SampleData.humanRelationshipNotes,
-                    onPlay = { navController.navigate(Routes.GAME) },
-                    onCombat = { navController.navigate(Routes.COMBAT) },
-                    onOpenCard = { navController.navigate(Routes.detail(it)) },
-                    onCreateDeck = viewModel::createDeck,
-                    onAddToDeck = viewModel::addCardToDeck,
-                    onRemoveFromDeck = viewModel::removeCardFromDeck,
-                    onBuyFrame = viewModel::unlockFrame,
-                    onCustomizeFrames = { navController.navigate(Routes.frames()) }
+                    onPlay = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.GAME)
+                    },
+                    onCombat = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.COMBAT)
+                    },
+                    onOpenCard = {
+                        audio.play(WildDeckAudioController.Effect.TOUCH_HOLD_CARD)
+                        navController.navigate(Routes.detail(it))
+                    },
+                    onCreateDeck = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.createDeck(it)
+                    },
+                    onAddToDeck = { deckId, cardId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_2)
+                        viewModel.addCardToDeck(deckId, cardId)
+                    },
+                    onRemoveFromDeck = { deckId, cardId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.removeCardFromDeck(deckId, cardId)
+                    },
+                    onBuyFrame = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.unlockFrame(it)
+                    },
+                    onCustomizeFrames = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.frames())
+                    }
                 )
             }
             composable(Routes.COLLECTION) {
@@ -206,9 +225,18 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     cards = state.ownedCards,
                     framesById = framesById,
                     decks = state.decks,
-                    onOpenCard = { navController.navigate(Routes.detail(it)) },
-                    onAddToDeck = viewModel::addCardToDeck,
-                    onPlay = { navController.navigate(Routes.GAME) }
+                    onOpenCard = {
+                        audio.play(WildDeckAudioController.Effect.TOUCH_HOLD_CARD)
+                        navController.navigate(Routes.detail(it))
+                    },
+                    onAddToDeck = { deckId, cardId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_2)
+                        viewModel.addCardToDeck(deckId, cardId)
+                    },
+                    onPlay = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.GAME)
+                    }
                 )
             }
             composable(Routes.DECKS) {
@@ -216,11 +244,26 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     decks = state.decks,
                     ownedCards = state.ownedCards,
                     relationshipsFor = viewModel::relationshipsFor,
-                    onCreate = viewModel::createDeck,
-                    onRename = viewModel::renameDeck,
-                    onDelete = viewModel::deleteDeck,
-                    onAdd = viewModel::addCardToDeck,
-                    onRemove = viewModel::removeCardFromDeck
+                    onCreate = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.createDeck(it)
+                    },
+                    onRename = { deckId, name ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_2)
+                        viewModel.renameDeck(deckId, name)
+                    },
+                    onDelete = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.deleteDeck(it)
+                    },
+                    onAdd = { deckId, cardId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_2)
+                        viewModel.addCardToDeck(deckId, cardId)
+                    },
+                    onRemove = { deckId, cardId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.removeCardFromDeck(deckId, cardId)
+                    }
                 )
             }
             composable(Routes.GAME) {
@@ -231,9 +274,15 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     feedback = state.miniGameFeedback,
                     points = state.progressionPoints,
                     entryCost = WildDeckViewModel.MINI_GAME_COST,
-                    onStart = viewModel::startMiniGame,
+                    onStart = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.startMiniGame()
+                    },
                     onAnswer = viewModel::answerTrivia,
-                    onCollection = { navController.navigate(Routes.COLLECTION) }
+                    onCollection = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.COLLECTION)
+                    }
                 )
             }
             composable(Routes.COMBAT) {
@@ -249,11 +298,23 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     soundEnabled = state.soundEnabled,
                     hapticsEnabled = state.hapticsEnabled,
                     frameCost = viewModel::frameUnlockCost,
-                    onStart = viewModel::startCombat,
+                    onStart = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.startCombat(it)
+                    },
                     onAction = viewModel::performCombatAction,
-                    onNextRound = viewModel::nextCombatRound,
-                    onEndRun = viewModel::endCombatRun,
-                    onUnlockFrame = viewModel::unlockFrame,
+                    onNextRound = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.nextCombatRound()
+                    },
+                    onEndRun = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.endCombatRun()
+                    },
+                    onUnlockFrame = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.unlockFrame(it)
+                    },
                     onCardHoldSound = { audio.play(WildDeckAudioController.Effect.TOUCH_HOLD_CARD) },
                     onReducedMotion = viewModel::setReducedMotion,
                     onSound = viewModel::setSoundEnabled,
@@ -266,8 +327,14 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     unlockedFrameIds = state.unlockedFrameIds,
                     points = state.progressionPoints,
                     frameCost = viewModel::frameUnlockCost,
-                    onBuy = viewModel::unlockFrame,
-                    onCustomize = { navController.navigate(Routes.frames()) }
+                    onBuy = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.unlockFrame(it)
+                    },
+                    onCustomize = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.frames())
+                    }
                 )
             }
             composable(
@@ -286,7 +353,10 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     frame = card?.currentFrameId?.let(framesById::get),
                     relationships = relationships,
                     isOwned = state.ownedCards.any { it.id == cardId },
-                    onCustomize = { navController.navigate(Routes.frames(cardId)) }
+                    onCustomize = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.frames(cardId))
+                    }
                 )
             }
             composable(
@@ -301,8 +371,14 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     frames = state.frames,
                     unlockedFrameIds = state.unlockedFrameIds,
                     initialCardId = entry.arguments?.getString("cardId")?.ifBlank { null },
-                    onApply = viewModel::applyFrame,
-                    onReset = viewModel::resetFrame
+                    onApply = { cardId, frameId ->
+                        audio.play(WildDeckAudioController.Effect.EXTRA_1)
+                        viewModel.applyFrame(cardId, frameId)
+                    },
+                    onReset = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.resetFrame(it)
+                    }
                 )
             }
         }

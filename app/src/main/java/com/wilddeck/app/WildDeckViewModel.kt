@@ -111,10 +111,11 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             ?.cardIds
             ?.mapNotNull(catalog::get)
             .orEmpty()
+        val selectedFrameIds = frameManager.selectedFrames()
         val cards = selectedDeckCards
             .ifEmpty { inventory.getAll(catalog).take(5) }
             .map { it.withProgress() }
-            .map { it.withBattleFrame() }
+            .map { it.withBattleFrame(selectedFrameIds[it.id]) }
         if (cards.isEmpty()) {
             showMessage("Earn or unlock a creature before starting combat.")
             return
@@ -330,8 +331,8 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     private fun AnimalCard.withProgress(): AnimalCard =
         levelingManager.applyProgress(this)
 
-    private fun AnimalCard.withBattleFrame(): AnimalCard {
-        val selectedFrameId = frameManager.selectedFrameId(id)
+    private fun AnimalCard.withBattleFrame(knownSelectedFrameId: String? = null): AnimalCard {
+        val selectedFrameId = knownSelectedFrameId ?: frameManager.selectedFrameId(id)
         val battleFrameId = if (frameManager.isUnlocked(selectedFrameId)) selectedFrameId else defaultFrameId
         return copy(currentFrameId = battleFrameId)
     }

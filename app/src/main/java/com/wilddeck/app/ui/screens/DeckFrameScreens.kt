@@ -220,7 +220,7 @@ fun FrameCustomizationScreen(
     onApply: (String, String) -> Unit,
     onReset: (String) -> Unit
 ) {
-    var selectedCardId by remember(initialCardId, ownedCards) {
+    var selectedCardId by remember(initialCardId) {
         mutableStateOf(initialCardId?.takeIf { id -> ownedCards.any { it.id == id } } ?: ownedCards.firstOrNull()?.id)
     }
     var selectedFrameId by remember(selectedCardId) {
@@ -323,19 +323,13 @@ fun FrameCustomizationScreen(
             }
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Button(
-                    onClick = { onApply(card.id, selectedFrameId) },
-                    modifier = Modifier.weight(1f)
-                ) { Text("Apply Frame") }
-                OutlinedButton(
-                    onClick = {
-                        selectedFrameId = "black"
-                        onReset(card.id)
-                    },
-                    modifier = Modifier.weight(1f)
-                ) { Text("Reset") }
-            }
+            OutlinedButton(
+                onClick = {
+                    selectedFrameId = "black"
+                    onReset(card.id)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Reset to Black Frame") }
         }
     }
     }
@@ -344,7 +338,10 @@ fun FrameCustomizationScreen(
             frame = frame,
             unlocked = frame.id in unlockedFrameIds,
             selected = frame.id == selectedFrameId,
-            onSelect = { selectedFrameId = frame.id },
+            onSelect = {
+                selectedFrameId = frame.id
+                onApply(card.id, frame.id)
+            },
             onDismiss = { inspectedFrame = null }
         )
     }

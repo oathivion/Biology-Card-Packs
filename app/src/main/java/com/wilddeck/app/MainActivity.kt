@@ -284,10 +284,6 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onCollection = {
                         audio.play(WildDeckAudioController.Effect.EXTRA_3)
                         navController.navigate(Routes.COLLECTION)
-                    },
-                    onCredits = {
-                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
-                        navController.navigate(Routes.CREDITS)
                     }
                 )
             }
@@ -370,6 +366,10 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onCustomize = {
                         audio.play(WildDeckAudioController.Effect.EXTRA_3)
                         navController.navigate(Routes.frames(cardId))
+                    },
+                    onCredits = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        navController.navigate(Routes.CREDITS)
                     }
                 )
             }

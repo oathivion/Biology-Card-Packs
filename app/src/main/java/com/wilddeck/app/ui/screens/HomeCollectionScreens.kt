@@ -676,9 +676,13 @@ private fun LearnMoreAnimalCard(
 @Composable
 private fun StatSummary(value: String, label: String, modifier: Modifier = Modifier) {
     Card(modifier) {
-        Column(Modifier.padding(horizontal = 22.dp, vertical = 12.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-            Text(label, style = MaterialTheme.typography.labelMedium)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 22.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+            Text(label, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         }
     }
 }

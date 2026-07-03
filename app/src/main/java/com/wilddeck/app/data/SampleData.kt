@@ -284,7 +284,25 @@ object SampleData {
         SymbiosisRelationship("goby", "pistol_shrimp", RelationshipType.MUTUALISM,
             "The shrimp maintains a shared burrow while the sharp-eyed goby watches for danger."),
         SymbiosisRelationship("remora", "shark", RelationshipType.COMMENSALISM,
-            "The remora gains transport and food scraps while the shark is usually little affected.")
+            "The remora gains transport and food scraps while the shark is usually little affected."),
+        SymbiosisRelationship("blue_whale", "humpback_whale", RelationshipType.COMMENSALISM,
+            "Aquatic giants share migration routes and ocean feeding grounds, creating an aquatic deck multiplier."),
+        SymbiosisRelationship("bottlenose_dolphin", "manta_ray", RelationshipType.COMMENSALISM,
+            "Fast ocean swimmers and reef travelers benefit from the same open-water awareness and current-reading style."),
+        SymbiosisRelationship("frilled_lizard", "asian_water_monitor", RelationshipType.COMMENSALISM,
+            "Large and small lizards create a reptile-focused multiplier built around threat displays, climbing, and quick reactions."),
+        SymbiosisRelationship("dromedary_camel", "fennec_fox", RelationshipType.COMMENSALISM,
+            "Desert specialists pair heat tolerance, water conservation, and nighttime survival into a desert deck multiplier."),
+        SymbiosisRelationship("addax", "sidewinder", RelationshipType.COMMENSALISM,
+            "Two desert survivors combine sand movement, drought endurance, and low-water adaptations."),
+        SymbiosisRelationship("polar_bear", "arctic_fox", RelationshipType.COMMENSALISM,
+            "Cold-weather hunters and scavengers can overlap on Arctic food opportunities, creating a cold biome multiplier."),
+        SymbiosisRelationship("emperor_penguin", "harp_seal", RelationshipType.COMMENSALISM,
+            "Ice-edge animals share cold-water survival adaptations for an Antarctic and Arctic-style cold deck bonus."),
+        SymbiosisRelationship("jaguar", "anaconda", RelationshipType.COMMENSALISM,
+            "Rainforest ambush predators create a jungle multiplier around stealth, water edges, and sudden strikes."),
+        SymbiosisRelationship("orangutan", "toucan", RelationshipType.COMMENSALISM,
+            "Canopy animals share fruit-rich forest habitat, making a treetop jungle multiplier.")
     )
 
     val humanRelationshipNotes = mapOf(

@@ -31,6 +31,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.wilddeck.app.data.CrashReporter
 import com.wilddeck.app.model.AnimalCard
@@ -47,7 +48,8 @@ fun CardDetailScreen(
     frame: CardFrame?,
     relationships: List<SymbiosisRelationship>,
     isOwned: Boolean,
-    onCustomize: () -> Unit
+    onCustomize: () -> Unit,
+    onCredits: () -> Unit
 ) {
     if (card == null || frame == null) {
         Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
@@ -72,7 +74,7 @@ fun CardDetailScreen(
         DetailBlock("Habitat", card.habitat)
         DetailBlock("Food", card.food)
         DetailBlock("Why health is ${card.health}", card.healthExplanation)
-        DetailBlock("Why danger is ${card.danger}", card.dangerExplanation)
+        DetailBlock("Why danger is ${card.danger}", card.dangerExplanation)
         AbilityInfoButton(card.ability, card.combatRole)
         DetailBlock("Rarity", card.rarity.name.lowercase().replaceFirstChar(Char::uppercase))
         DetailBlock(
@@ -84,6 +86,9 @@ fun CardDetailScreen(
                 "$partnerName — ${it.type.name.lowercase().replaceFirstChar(Char::uppercase)}\n${it.description}"
             }
         )
+        OutlinedButton(onClick = onCredits, modifier = Modifier.fillMaxWidth()) {
+            Text("Credits")
+        }
     }
 }
 
@@ -184,8 +189,7 @@ fun MiniGameScreen(
     entryCost: Int,
     onStart: () -> Unit,
     onAnswer: (String) -> Unit,
-    onCollection: () -> Unit,
-    onCredits: () -> Unit
+    onCollection: () -> Unit
 ) {
     if (session == null || frame == null) {
         Column(
@@ -193,12 +197,24 @@ fun MiniGameScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text("Animal Trivia", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
-            Text("Answer animal questions. Reach three progress points to earn a new card.")
+            Text(
+                "Animal Trivia",
+                modifier = Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Black,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                "Answer animal questions. Reach three progress points to earn a new card.",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
             Text(
                 "Entry: $entryCost point · You have $points",
+                modifier = Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(20.dp))
             Button(
@@ -207,11 +223,11 @@ fun MiniGameScreen(
                 modifier = Modifier.testTag("start_game")
             ) { Text("Spend $entryCost point and start") }
             if (points < entryCost) {
-                Text("Clear a Wild Run round to earn an entry point.")
-            }
-            Spacer(Modifier.height(28.dp))
-            OutlinedButton(onClick = onCredits, modifier = Modifier.fillMaxWidth()) {
-                Text("Credits")
+                Text(
+                    "Clear a Wild Run round to earn an entry point.",
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center
+                )
             }
         }
         return
@@ -276,9 +292,6 @@ fun MiniGameScreen(
                     Text(option, modifier = Modifier.padding(vertical = 4.dp))
                 }
             }
-        }
-        OutlinedButton(onClick = onCredits, modifier = Modifier.fillMaxWidth()) {
-            Text("Credits")
         }
     }
 }
@@ -345,4 +358,5 @@ fun CreditsScreen() {
         }
     }
 }
-
+
+

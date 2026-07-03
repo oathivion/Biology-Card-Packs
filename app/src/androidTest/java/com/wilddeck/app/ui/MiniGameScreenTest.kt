@@ -38,8 +38,7 @@ class MiniGameScreenTest {
                     entryCost = 1,
                     onStart = {},
                     onAnswer = { selected = it },
-                    onCollection = {},
-                    onCredits = {}
+                    onCollection = {}
                 )
             }
         }
@@ -73,8 +72,7 @@ class MiniGameScreenTest {
                     entryCost = 1,
                     onStart = {},
                     onAnswer = {},
-                    onCollection = {},
-                    onCredits = {}
+                    onCollection = {}
                 )
             }
         }
@@ -101,8 +99,7 @@ class MiniGameScreenTest {
                     entryCost = 1,
                     onStart = {},
                     onAnswer = {},
-                    onCollection = {},
-                    onCredits = {}
+                    onCollection = {}
                 )
             }
         }

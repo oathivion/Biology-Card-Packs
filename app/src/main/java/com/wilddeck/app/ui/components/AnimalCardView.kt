@@ -107,6 +107,13 @@ fun AnimalCardView(
                 }
             }
             Spacer(Modifier.height(8.dp))
+            AbilityInfoButton(
+                ability = card.ability,
+                role = card.combatRole,
+                compact = compact,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(8.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

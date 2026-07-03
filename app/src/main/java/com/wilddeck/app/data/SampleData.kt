@@ -132,15 +132,6 @@ object SampleData {
     val frames = listOf(
         CardFrame("black", "Black Border", "Classic", 0xFF171717, true,
             combatBonus = FrameCombatBonus(description = "A clean frame with no combat bonus.")),
-        CardFrame("temp_dev", "Temp Dev Frame", "Testing only", 0xFFFF2D55, false,
-            type = FrameType.APEX,
-            combatBonus = FrameCombatBonus(
-                healthBonus = 1000,
-                damageBonus = 1000,
-                attackPowerBonus = 1000,
-                supportPowerBonus = 1000,
-                description = "Temporary testing frame: +1000 health, +1000 damage, +1000 attack power, and +1000 support power."
-            )),
         CardFrame("forest", "Forest Frame", "Leaf-carved", 0xFF285943, true,
             type = FrameType.GUARDIAN,
             combatBonus = FrameCombatBonus(healthBonus = 1, openingShield = 1,

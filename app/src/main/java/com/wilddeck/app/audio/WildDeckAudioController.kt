@@ -31,7 +31,8 @@ class WildDeckAudioController(context: Context) {
 
     private val battleTracks = listOf(
         R.raw.music_glitch_medusa,
-        R.raw.music_glitch_panacea
+        R.raw.music_glitch_panacea,
+        R.raw.music_glitch_shinkansen_2
     )
     private var enabled = true
     private var musicPlayer: MediaPlayer? = null

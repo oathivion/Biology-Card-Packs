@@ -82,7 +82,7 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
     val audio = remember { WildDeckAudioController(context) }
     val currentEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentEntry?.destination?.route
-    val isHome = currentRoute == Routes.HOME
+    val hidesTopBar = currentRoute == Routes.HOME || currentRoute == Routes.COMBAT
     val framesById = state.frames.associateBy { it.id }
     val learningTriviaByCardId = remember(state.catalog) {
         val manager = MiniGameManager(state.catalog, Random(0))
@@ -143,7 +143,7 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
 
     Scaffold(
         topBar = {
-            if (!isHome) {
+            if (!hidesTopBar) {
                 TopAppBar(
                     title = { Text(screenTitle(currentRoute)) },
                     navigationIcon = {
@@ -319,6 +319,11 @@ fun WildDeckApp(viewModel: WildDeckViewModel = viewModel()) {
                     onEndRun = {
                         audio.play(WildDeckAudioController.Effect.EXTRA_3)
                         viewModel.endCombatRun()
+                    },
+                    onBack = {
+                        audio.play(WildDeckAudioController.Effect.EXTRA_3)
+                        viewModel.endCombatRun()
+                        navController.popBackStack()
                     },
                     onUnlockFrame = {
                         audio.play(WildDeckAudioController.Effect.EXTRA_1)

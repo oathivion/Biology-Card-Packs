@@ -227,6 +227,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun frameUnlockCost(frameId: String): Int = when (frameId) {
+        "temp_dev" -> 1
         "desert" -> 20
         "arctic" -> 30
         "gold" -> 50

@@ -116,6 +116,7 @@ fun CombatScreen(
     onAction: (String, String) -> Unit,
     onNextRound: () -> Unit,
     onEndRun: () -> Unit,
+    onBack: () -> Unit,
     onUnlockFrame: (String) -> Unit,
     onCardHoldSound: () -> Unit,
     onReducedMotion: (Boolean) -> Unit,
@@ -125,12 +126,12 @@ fun CombatScreen(
     if (session == null) {
         CombatLobby(
             points, decks, ownedCards, lockedFrames, reducedMotion, soundEnabled, hapticsEnabled,
-            frameCost, onStart, onUnlockFrame, onReducedMotion, onSound, onHaptics
+            frameCost, onStart, onBack, onUnlockFrame, onReducedMotion, onSound, onHaptics
         )
     } else {
         CombatBoard(
             session, effects, effectSequence, points, reducedMotion, soundEnabled, hapticsEnabled,
-            onAction, onNextRound, onEndRun, onCardHoldSound
+            onAction, onNextRound, onEndRun, onBack, onCardHoldSound
         )
     }
 }
@@ -146,6 +147,7 @@ private fun CombatLobby(
     hapticsEnabled: Boolean,
     frameCost: (String) -> Int,
     onStart: (String?) -> Unit,
+    onBack: () -> Unit,
     onUnlockFrame: (String) -> Unit,
     onReducedMotion: (Boolean) -> Unit,
     onSound: (Boolean) -> Unit,
@@ -161,7 +163,6 @@ private fun CombatLobby(
             Modifier.weight(1f).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-        Text("Wild Run", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Black)
         Text("Drag attackers onto enemies and supports onto allies. Clear a round to earn 1 point.")
         Surface(color = MaterialTheme.colorScheme.primaryContainer, shape = RoundedCornerShape(14.dp)) {
             Text(
@@ -227,6 +228,7 @@ private fun CombatLobby(
             modifier = Modifier.fillMaxWidth()
         ) { Text("Use first ${minOf(5, ownedCards.size)} collected creatures") }
         if (ownedCards.isEmpty()) Text("Earn your first creature through Animal Trivia to begin.")
+        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
     }
     }
 }
@@ -320,6 +322,7 @@ private fun CombatBoard(
     onAction: (String, String) -> Unit,
     onNextRound: () -> Unit,
     onEndRun: () -> Unit,
+    onBack: () -> Unit,
     onCardHoldSound: () -> Unit
 ) {
     val targetBounds = remember { mutableStateMapOf<String, Rect>() }
@@ -446,7 +449,7 @@ private fun CombatBoard(
                     Button(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("Return to Camp") }
                 }
             }
-            TextButton(onClick = onEndRun, modifier = Modifier.fillMaxWidth()) { Text("End Run") }
+            TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("Back") }
         }
         EnemyAttackArrow(activeEffects, targetBounds)
         XpRewardOverlay(

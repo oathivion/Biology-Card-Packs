@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
-import com.wilddeck.app.R
+import com.wilddecks.app.R
 import kotlin.random.Random
 
 class WildDeckAudioController(context: Context) {

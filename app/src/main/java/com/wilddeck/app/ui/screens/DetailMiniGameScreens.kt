@@ -32,6 +32,7 @@ import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.MiniGameSession
 import com.wilddeck.app.model.SymbiosisRelationship
 import com.wilddeck.app.domain.CardLevelingManager
+import com.wilddeck.app.ui.components.AbilityInfoButton
 import com.wilddeck.app.ui.components.AnimalCardView
 
 @Composable
@@ -66,10 +67,7 @@ fun CardDetailScreen(
         DetailBlock("Food", card.food)
         DetailBlock("Why health is ${card.health}", card.healthExplanation)
         DetailBlock("Why danger is ${card.danger}", card.dangerExplanation)
-        DetailBlock(
-            "Wild Run role",
-            "${card.combatRole.name.lowercase().replaceFirstChar(Char::uppercase)} — ${card.ability.name}\n${card.ability.description}"
-        )
+        AbilityInfoButton(card.ability, card.combatRole)
         DetailBlock("Rarity", card.rarity.name.lowercase().replaceFirstChar(Char::uppercase))
         DetailBlock(
             "Known symbiotic partners",
@@ -309,3 +307,4 @@ fun CreditsScreen() {
         }
     }
 }
+

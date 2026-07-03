@@ -90,6 +90,7 @@ import com.wilddeck.app.model.CombatRole
 import com.wilddeck.app.model.CombatSession
 import com.wilddeck.app.model.CombatUnit
 import com.wilddeck.app.model.Deck
+import com.wilddeck.app.ui.components.AbilityInfoButton
 import com.wilddeck.app.ui.components.AnimalCardView
 import com.wilddeck.app.ui.components.AnimalPhoto
 import kotlinx.coroutines.delay
@@ -776,8 +777,11 @@ private fun CombatTile(
                 }
                 Text(unit.card.combatRole.name, color = roleColor, style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold)
-                Text(unit.card.ability.name, style = MaterialTheme.typography.labelSmall,
-                    textAlign = TextAlign.Center, maxLines = 2)
+                AbilityInfoButton(
+                    ability = unit.card.ability,
+                    role = unit.card.combatRole,
+                    compact = true
+                )
             }
         }
     }
@@ -1103,7 +1107,7 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                         "Combat HP ${unit.currentHealth}/${unit.maxHealth} · Damage ${unit.damage}",
                         fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                     InspectionBlock("Animal", unit.card.description)
-                    InspectionBlock("Ability: ${unit.card.ability.name}", unit.card.ability.description)
+                    AbilityInfoButton(unit.card.ability, unit.card.combatRole)
                     unit.frame?.let { frame ->
                         InspectionBlock(
                             "Frame: ${frame.name}",

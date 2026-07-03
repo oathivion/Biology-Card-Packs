@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.wilddeck.app"
+    namespace = "com.wilddecks.app"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.wilddeck.app"
+        applicationId = "com.wilddecks.app"
         minSdk = 26
         targetSdk = 35
         versionCode = 1

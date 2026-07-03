@@ -12,8 +12,8 @@ android {
         applicationId = "com.wilddecks.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "2"
+        versionCode = 3
+        versionName = "3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

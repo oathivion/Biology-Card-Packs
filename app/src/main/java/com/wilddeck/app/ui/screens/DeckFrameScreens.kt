@@ -250,7 +250,7 @@ fun FrameCustomizationScreen(
     ) {
         item {
             Text("Frame Workshop", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Black)
-            Text("Frames now add small Wild Run bonuses through their type and unique perk.")
+            Text("Frames now add clear Wild Run effects: shields, healing, growth, damage, and survival perks.")
         }
         item {
             var cardMenu by remember { mutableStateOf(false) }
@@ -305,10 +305,7 @@ fun FrameCustomizationScreen(
                         style = MaterialTheme.typography.bodySmall
                     )
                     if (false) {
-                    Text(
-                        "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
                     Text(frame.combatBonus.description, style = MaterialTheme.typography.labelSmall)
                     if (frame.effect != com.wilddeck.app.model.FrameEffect.NONE) {
                         Text(
@@ -371,9 +368,7 @@ private fun FrameWorkshopDetailDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 DetailBullet("Style", frame.borderStyle)
-                DetailBullet("Type", frame.type.displayName, keywordColor(frame.type.displayName))
-                DetailBullet("Multiplier", "x${formatMultiplier(frame.type.statMultiplier)} to frame-scaled values")
-                DetailBullet("Combat bonus", frame.combatBonus.description)
+                DetailBullet("Run effect", frame.combatBonus.description)
                 DetailBullet(
                     "Effect",
                     if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
@@ -445,10 +440,7 @@ fun FrameStoreScreen(
                         Text(frame.name, fontWeight = FontWeight.Bold)
                         Text("Tap for details", style = MaterialTheme.typography.bodySmall)
                         if (false) {
-                        Text(
-                            "${frame.borderStyle} · ${frame.type.displayName} ×${formatMultiplier(frame.type.statMultiplier)}",
-                            style = MaterialTheme.typography.bodySmall
-                        )
+                        Text(frame.borderStyle, style = MaterialTheme.typography.bodySmall)
                         Text(frame.combatBonus.description, style = MaterialTheme.typography.labelSmall)
                         Text(
                             if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
@@ -514,9 +506,7 @@ private fun FrameStoreDetailDialog(
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(9.dp)) {
                 DetailBullet("Style", frame.borderStyle)
-                DetailBullet("Type", frame.type.displayName, keywordColor(frame.type.displayName))
-                DetailBullet("Multiplier", "x${formatMultiplier(frame.type.statMultiplier)} to frame-scaled values")
-                DetailBullet("Combat bonus", frame.combatBonus.description)
+                DetailBullet("Run effect", frame.combatBonus.description)
                 DetailBullet(
                     "Effect",
                     if (frame.effect == com.wilddeck.app.model.FrameEffect.NONE) "Static frame"
@@ -556,17 +546,6 @@ private fun DetailBullet(label: String, value: String, valueColor: Color = Mater
             Text(value, color = valueColor, style = MaterialTheme.typography.bodySmall)
         }
     }
-}
-
-private fun keywordColor(keyword: String): Color =
-    when (keyword.lowercase()) {
-        "guardian" -> Color(0xFF2E7D32)
-        "support" -> Color(0xFF00838F)
-        "control" -> Color(0xFF6A1B9A)
-        "assault" -> Color(0xFFC62828)
-        "balanced" -> Color(0xFF1565C0)
-        "apex" -> Color(0xFFE65100)
-        else -> Color.Unspecified
 }
 
 @Composable

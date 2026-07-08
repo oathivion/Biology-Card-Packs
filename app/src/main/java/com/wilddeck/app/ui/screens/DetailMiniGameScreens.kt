@@ -65,11 +65,7 @@ fun CardDetailScreen(
         LevelProgressBlock(card)
         DetailBlock(
             "Equipped frame",
-            if (frame.xpMultiplier > 1.0) {
-                "${frame.name}: ${frame.combatBonus.description}\nXP earned: x${frame.xpMultiplier.toInt()}"
-            } else {
-                "${frame.name}: ${frame.combatBonus.description}\nXP earned: normal"
-            }
+            "${frame.name}: ${frame.combatBonus.description}"
         )
         DetailBlock("Habitat", card.habitat)
         DetailBlock("Food", card.food)

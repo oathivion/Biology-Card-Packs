@@ -134,7 +134,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
             progressionPoints += 1
             val baseXp = CardLevelingManager.roundExperience(result.session.round)
             val multipliers = current.playerUnits.associate { unit ->
-                unit.card.id to (unit.frame?.xpMultiplier ?: 1.0)
+                unit.card.id to 1.0
             }
             val leveling = levelingManager.addExperience(
                 current.playerUnits.map { it.card.id },
@@ -163,11 +163,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
                     label = "Card unlocked"
                 )
             }
-            val xpText = if (multipliers.values.any { it > 1.0 }) {
-                "$baseXp base XP, doubled by equipped Evolution Frames"
-            } else {
-                "$baseXp XP"
-            }
+            val xpText = "$baseXp XP"
             message = if (leveling.totalLevelsGained > 0) {
                 "${result.message} Cards gained $xpText. ${leveling.totalLevelsGained} level up!"
             } else {
@@ -234,7 +230,7 @@ class WildDeckViewModel(application: Application) : AndroidViewModel(application
         "starlight", "ember", "glacier", "monsoon" -> 30
         "aurora", "storm" -> 40
         "cosmic" -> 50
-        "evolution" -> 60
+        "evolution", "gravebound" -> 60
         "leviathan", "kraken", "shellback", "ray_current", "echowave" -> 40
         "rainforest", "dart_frog", "silverback", "polar_night" -> 40
         "tuskguard", "snowprint", "mirage", "venomtail" -> 40

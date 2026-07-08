@@ -772,7 +772,7 @@ private fun CombatTile(
                 if (unit.shield > 0) Text("◈ ${unit.shield}", color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelSmall)
                 unit.frame?.let { frame ->
-                    Text(frame.type.displayName, color = Color(frame.colorArgb), style = MaterialTheme.typography.labelSmall,
+                    Text(frame.name, color = Color(frame.colorArgb), style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold, maxLines = 1)
                 }
                 Text(unit.card.combatRole.name, color = roleColor, style = MaterialTheme.typography.labelSmall,
@@ -1109,11 +1109,7 @@ private fun CombatCardDialog(unit: CombatUnit, reducedMotion: Boolean, onDismiss
                     InspectionBlock("Animal", unit.card.description)
                     AbilityInfoButton(unit.card.ability, unit.card.combatRole)
                     unit.frame?.let { frame ->
-                        InspectionBlock(
-                            "Frame: ${frame.name}",
-                            "${frame.type.displayName} ×${formatCombatMultiplier(frame.type.statMultiplier)}. " +
-                                frame.combatBonus.description
-                        )
+                        InspectionBlock("Frame: ${frame.name}", frame.combatBonus.description)
                     }
                     InspectionBlock("Habitat", unit.card.habitat)
                     InspectionBlock("Diet", unit.card.food)

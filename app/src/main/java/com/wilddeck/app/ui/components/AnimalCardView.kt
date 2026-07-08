@@ -461,6 +461,18 @@ private fun AnimatedFrameEffect(effect: FrameEffect, frameColor: Color, modifier
                 }
                 drawPath(path, Color(0xFFFF9A4A).copy(alpha = 0.58f), style = Stroke(5f, cap = StrokeCap.Round))
             }
+            FrameEffect.SKULLS -> {
+                val pulse = 0.2f + 0.35f * sin(progress * 6.28f).absoluteValue
+                drawRect(Color.Black.copy(alpha = pulse))
+                repeat(7) { index ->
+                    val x = size.width * ((index * 37 % 91) / 91f)
+                    val y = size.height * ((index * 53 % 89) / 89f)
+                    val radius = 5f + (index % 3) * 2f
+                    drawCircle(Color.White.copy(alpha = 0.28f + pulse), radius, Offset(x, y))
+                    drawCircle(Color.Black.copy(alpha = 0.55f), radius * 0.22f, Offset(x - radius * 0.28f, y - radius * 0.12f))
+                    drawCircle(Color.Black.copy(alpha = 0.55f), radius * 0.22f, Offset(x + radius * 0.28f, y - radius * 0.12f))
+                }
+            }
             FrameEffect.NONE -> Unit
         }
     }

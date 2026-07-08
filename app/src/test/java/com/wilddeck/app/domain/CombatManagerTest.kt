@@ -40,14 +40,14 @@ class CombatManagerTest {
         val unit = session.playerUnits.single()
 
         assertEquals("ember", unit.frame?.id)
-        assertEquals(11, unit.damage)
-        assertEquals(1, unit.attackPowerBonus)
-        assertTrue(unit.multiplier > 1.0)
+        assertEquals(14, unit.damage)
+        assertEquals(5, unit.attackPowerBonus)
+        assertEquals(1.0, unit.multiplier, 0.0)
     }
 
     @Test
-    fun evolutionFrameScalesSurvivorEachRound() {
-        val lion = SampleData.animalCards.first { it.id == "lion" }.copy(currentFrameId = "evolution")
+    fun oceanFrameGrantsShieldEachRound() {
+        val lion = SampleData.animalCards.first { it.id == "lion" }.copy(currentFrameId = "ocean")
         val manager = CombatManager(SampleData.animalCards, random = Random(11), frames = SampleData.frames)
         val session = requireNotNull(manager.startRun(listOf(lion), 1.0))
         val unit = session.playerUnits.single()
@@ -55,9 +55,10 @@ class CombatManagerTest {
         val next = manager.nextRound(session.copy(enemyUnits = emptyList()))
         val scaled = next.playerUnits.single()
 
-        assertEquals(unit.maxHealth + 1, scaled.maxHealth)
-        assertEquals(unit.currentHealth + 1, scaled.currentHealth)
-        assertEquals(unit.damage + 1, scaled.damage)
+        assertEquals(unit.maxHealth, scaled.maxHealth)
+        assertEquals(unit.currentHealth, scaled.currentHealth)
+        assertEquals(unit.damage, scaled.damage)
+        assertEquals(unit.shield + 3, scaled.shield)
     }
 
     @Test

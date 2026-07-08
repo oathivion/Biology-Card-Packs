@@ -160,11 +160,11 @@ class CardLevelingManager(
         )
     }
 
-    fun addExperience(cardIds: Collection<String>, baseExperience: Int, xpMultiplierByCardId: Map<String, Double>): LevelingResult {
+    fun addExperience(cardIds: Collection<String>, baseExperience: Int, xpFactorByCardId: Map<String, Double>): LevelingResult {
         var totalLevelsGained = 0
         val leveledCardIds = mutableSetOf<String>()
         cardIds.distinct().forEach { cardId ->
-            val multiplier = xpMultiplierByCardId[cardId] ?: 1.0
+            val multiplier = xpFactorByCardId[cardId] ?: 1.0
             val earned = (baseExperience * multiplier).roundToInt().coerceAtLeast(0)
             val before = progressFor(cardId)
             val after = addExperience(before, earned)

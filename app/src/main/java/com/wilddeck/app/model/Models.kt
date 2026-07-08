@@ -58,8 +58,7 @@ data class CardFrame(
     val rarityRequirement: CardRarity? = null,
     val effect: FrameEffect = FrameEffect.NONE,
     val type: FrameType = FrameType.BALANCED,
-    val combatBonus: FrameCombatBonus = FrameCombatBonus(),
-    val xpMultiplier: Double = 1.0
+    val combatBonus: FrameCombatBonus = FrameCombatBonus()
 )
 
 enum class FrameEffect {
@@ -87,16 +86,17 @@ enum class FrameEffect {
     TUSK_GUARD,
     SNOW_TRACKS,
     DESERT_HEAT,
-    SCORPION_STING
+    SCORPION_STING,
+    SKULLS
 }
 
-enum class FrameType(val displayName: String, val statMultiplier: Double) {
-    BALANCED("Balanced", 1.00),
-    ASSAULT("Assault", 1.08),
-    GUARDIAN("Guardian", 1.06),
-    SUPPORT("Support", 1.05),
-    CONTROL("Control", 1.04),
-    APEX("Apex", 1.10)
+enum class FrameType(val displayName: String) {
+    BALANCED("Wild"),
+    ASSAULT("Predator"),
+    GUARDIAN("Protector"),
+    SUPPORT("Caretaker"),
+    CONTROL("Trickster"),
+    APEX("Legend")
 }
 
 data class FrameCombatBonus(
@@ -106,6 +106,11 @@ data class FrameCombatBonus(
     val damageMitigation: Int = 0,
     val attackPowerBonus: Int = 0,
     val supportPowerBonus: Int = 0,
+    val perRoundShield: Int = 0,
+    val perRoundHeal: Int = 0,
+    val randomGrowthChancePercent: Int = 0,
+    val randomGrowthAmount: Int = 0,
+    val deathScalingPerFallen: Double = 0.0,
     val description: String = "No combat bonus."
 )
 
@@ -200,7 +205,8 @@ data class CombatUnit(
     val hasActed: Boolean = false,
     val shield: Int = 0,
     val isTaunting: Boolean = false,
-    val isStunned: Boolean = false
+    val isStunned: Boolean = false,
+    val deathScalingAppliedFallenCount: Int = 0
 ) {
     val isAlive: Boolean get() = currentHealth > 0
 }
@@ -213,7 +219,8 @@ data class CombatSession(
     val enemyMultiplier: Double,
     val pointsEarnedThisRun: Int = 0,
     val battleLog: List<String> = emptyList(),
-    val isDefeated: Boolean = false
+    val isDefeated: Boolean = false,
+    val fallenPlayerCount: Int = 0
 ) {
     val isRoundCleared: Boolean get() = enemyUnits.none { it.isAlive }
 }

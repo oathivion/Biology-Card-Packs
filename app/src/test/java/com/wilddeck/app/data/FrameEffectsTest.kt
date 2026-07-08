@@ -1,7 +1,6 @@
 package com.wilddeck.app.data
 
 import com.wilddeck.app.model.FrameEffect
-import com.wilddeck.app.model.FrameType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,18 +10,21 @@ class FrameEffectsTest {
     fun animatedFrames_haveDifferentAnimatedEffects() {
         val animatedFrames = SampleData.frames.filter { it.effect != FrameEffect.NONE }
 
-        assertEquals(24, animatedFrames.size)
-        assertEquals(24, animatedFrames.map { it.effect }.toSet().size)
+        assertEquals(25, animatedFrames.size)
+        assertEquals(25, animatedFrames.map { it.effect }.toSet().size)
         assertTrue(animatedFrames.none { it.isUnlockedByDefault })
-        assertTrue(animatedFrames.all { it.type != FrameType.BALANCED })
         assertTrue(animatedFrames.all { it.combatBonus.description != "No combat bonus." })
     }
 
     @Test
-    fun evolutionFrame_providesDoubleXp() {
-        val xpFrames = SampleData.frames.filter { it.xpMultiplier > 1.0 }
+    fun overhauledFrames_useRunEffectsInsteadOfXpMultipliers() {
+        val ocean = SampleData.frames.single { it.id == "ocean" }
+        val evolution = SampleData.frames.single { it.id == "evolution" }
+        val gravebound = SampleData.frames.single { it.id == "gravebound" }
 
-        assertEquals(listOf("evolution"), xpFrames.map { it.id })
-        assertEquals(2.0, xpFrames.single().xpMultiplier, 0.0)
+        assertEquals(3, ocean.combatBonus.perRoundShield)
+        assertEquals(35, evolution.combatBonus.randomGrowthChancePercent)
+        assertEquals(1, evolution.combatBonus.randomGrowthAmount)
+        assertEquals(0.5, gravebound.combatBonus.deathScalingPerFallen, 0.0)
     }
 }

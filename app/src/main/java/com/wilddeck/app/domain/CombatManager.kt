@@ -4,7 +4,6 @@ import com.wilddeck.app.model.AbilityType
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.FrameCombatBonus
-import com.wilddeck.app.model.FrameEffect
 import com.wilddeck.app.model.FrameType
 import com.wilddeck.app.model.CombatActionResult
 import com.wilddeck.app.model.CombatEffect
@@ -87,24 +86,14 @@ class CombatManager(
         require(session.isRoundCleared) { "The current round is not cleared." }
         val nextRound = session.round + 1
         val refreshedPlayers = session.playerUnits.filter { it.isAlive }.map {
-            val scales = it.frame?.effect == FrameEffect.ROUND_GROWTH
-            val healthGrowth = if (scales) 1 else 0
-            val damageGrowth = if (scales && it.card.combatRole != CombatRole.SUPPORT) 1 else 0
-            it.copy(
-                maxHealth = it.maxHealth + healthGrowth,
-                currentHealth = (it.currentHealth + 1 + healthGrowth).coerceAtMost(it.maxHealth + healthGrowth),
-                damage = it.damage + damageGrowth,
-                hasActed = false,
-                isTaunting = false,
-                isStunned = false
-            )
+            applyRoundStartFrameEffects(it, session.fallenPlayerCount)
         }
         return session.copy(
             round = nextRound,
             playerUnits = refreshedPlayers,
             enemyUnits = createEnemies(nextRound),
             enemyMultiplier = enemyMultiplier(nextRound),
-            battleLog = (session.battleLog + "Round $nextRound begins. Survivors recover 1 health.").takeLast(8),
+            battleLog = (session.battleLog + "Round $nextRound begins. Frame effects refresh.").takeLast(8),
             isDefeated = false
         )
     }
@@ -318,13 +307,21 @@ class CombatManager(
                 }
             }
         }
+        val newlyFallen = session.playerUnits.count { before ->
+            before.isAlive && players.firstOrNull { it.instanceId == before.instanceId }?.isAlive == false
+        }
+        val fallenTotal = session.fallenPlayerCount + newlyFallen
+        if (newlyFallen > 0) {
+            players = players.map { if (it.isAlive) applyDeathScalingFrame(it, fallenTotal) else it }
+        }
         players = players.map { it.copy(hasActed = false, isTaunting = false) }
         return EnemyTurnOutcome(
             session = session.copy(
                 playerUnits = players,
                 enemyUnits = enemies,
                 battleLog = log.takeLast(8),
-                isDefeated = players.none { it.isAlive }
+                isDefeated = players.none { it.isAlive },
+                fallenPlayerCount = fallenTotal
             ),
             effects = effects
         )
@@ -392,7 +389,7 @@ class CombatManager(
     ): CombatUnit {
         val frame = if (applyFrameBonuses) framesById[card.currentFrameId] else null
         val bonus = frame?.combatBonus
-        val effectiveMultiplier = multiplier * (frame?.type?.statMultiplier ?: 1.0)
+        val effectiveMultiplier = multiplier
         val health = ((card.health * effectiveMultiplier).roundToInt() + (bonus?.healthBonus ?: 0)).coerceAtLeast(1)
         val damage = if (card.combatRole == CombatRole.SUPPORT) {
             0
@@ -412,6 +409,53 @@ class CombatManager(
             attackPowerBonus = bonus?.attackPowerBonus ?: 0,
             supportPowerBonus = bonus?.supportPowerBonus ?: 0,
             shield = openingShield
+        )
+    }
+
+    private fun applyRoundStartFrameEffects(unit: CombatUnit, fallenPlayerCount: Int): CombatUnit {
+        val bonus = unit.frame?.combatBonus
+        val growth = randomRunGrowth(bonus, unit.card.combatRole)
+        val maxHealth = unit.maxHealth + growth.health
+        val damage = unit.damage + growth.damage
+        val recovered = 1 + (bonus?.perRoundHeal ?: 0) + growth.health
+        val refreshed = unit.copy(
+            maxHealth = maxHealth,
+            currentHealth = (unit.currentHealth + recovered).coerceAtMost(maxHealth),
+            damage = damage,
+            shield = unit.shield + (bonus?.perRoundShield ?: 0),
+            hasActed = false,
+            isTaunting = false,
+            isStunned = false
+        )
+        return applyDeathScalingFrame(refreshed, fallenPlayerCount)
+    }
+
+    private fun randomRunGrowth(bonus: FrameCombatBonus?, role: CombatRole): StatGrowth {
+        val chance = bonus?.randomGrowthChancePercent ?: 0
+        val amount = bonus?.randomGrowthAmount ?: 0
+        if (chance <= 0 || amount <= 0 || random.nextInt(100) >= chance) return StatGrowth()
+        val growDamage = role != CombatRole.SUPPORT && random.nextBoolean()
+        return if (growDamage) StatGrowth(damage = amount) else StatGrowth(health = amount)
+    }
+
+    private fun applyDeathScalingFrame(unit: CombatUnit, fallenPlayerCount: Int): CombatUnit {
+        if (!unit.isAlive) return unit
+        val scale = unit.frame?.combatBonus?.deathScalingPerFallen ?: 0.0
+        if (scale <= 0.0 || fallenPlayerCount <= unit.deathScalingAppliedFallenCount) return unit
+        val newlyCountedFallen = fallenPlayerCount - unit.deathScalingAppliedFallenCount
+        val multiplier = 1.0 + (scale * newlyCountedFallen)
+        val scaledMaxHealth = floor(unit.maxHealth * multiplier).toInt().coerceAtLeast(unit.maxHealth)
+        val healthGain = scaledMaxHealth - unit.maxHealth
+        val scaledDamage = if (unit.card.combatRole == CombatRole.SUPPORT) {
+            unit.damage
+        } else {
+            floor(unit.damage * multiplier).toInt().coerceAtLeast(unit.damage)
+        }
+        return unit.copy(
+            maxHealth = scaledMaxHealth,
+            currentHealth = unit.currentHealth + healthGain,
+            damage = scaledDamage,
+            deathScalingAppliedFallenCount = fallenPlayerCount
         )
     }
 
@@ -471,6 +515,11 @@ class CombatManager(
     private data class EnemyTurnOutcome(
         val session: CombatSession,
         val effects: List<CombatEffect>
+    )
+
+    private data class StatGrowth(
+        val health: Int = 0,
+        val damage: Int = 0
     )
 
     companion object {

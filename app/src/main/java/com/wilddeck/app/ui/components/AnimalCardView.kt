@@ -106,6 +106,7 @@ fun AnimalCardView(
                     StatBadge("HEALTH", card.health, Color(0xFF286B45), "health_${card.id}", compact)
                 }
             }
+            FrameBonusBadgeRow(frame = frame, compact = compact)
             Spacer(Modifier.height(8.dp))
             AbilityInfoButton(
                 ability = card.ability,
@@ -477,6 +478,73 @@ private fun AnimatedFrameEffect(effect: FrameEffect, frameColor: Color, modifier
         }
     }
 }
+
+@Composable
+private fun FrameBonusBadgeRow(frame: CardFrame, compact: Boolean) {
+    val badges = frameBonusBadges(frame)
+    if (badges.isEmpty()) return
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(if (compact) 2.dp else 3.dp)
+    ) {
+        badges.take(if (compact) 4 else 6).chunked(3).forEach { rowBadges ->
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                rowBadges.forEach { badge ->
+                    FrameBonusBadgeChip(badge, compact)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FrameBonusBadgeChip(badge: FrameBonusBadge, compact: Boolean) {
+    Surface(
+        color = badge.color,
+        shape = RoundedCornerShape(999.dp),
+        modifier = Modifier.padding(horizontal = if (compact) 2.dp else 3.dp)
+    ) {
+        Text(
+            text = badge.text,
+            color = Color.White,
+            fontSize = if (compact) 8.sp else 10.sp,
+            fontWeight = FontWeight.Black,
+            maxLines = 1,
+            modifier = Modifier.padding(
+                horizontal = if (compact) 5.dp else 7.dp,
+                vertical = if (compact) 2.dp else 3.dp
+            )
+        )
+    }
+}
+
+private fun frameBonusBadges(frame: CardFrame): List<FrameBonusBadge> {
+    val bonus = frame.combatBonus
+    return buildList {
+        if (bonus.damageBonus > 0) add(FrameBonusBadge("DANGER +${bonus.damageBonus}", Color(0xFF9B342E)))
+        if (bonus.healthBonus > 0) add(FrameBonusBadge("HEALTH +${bonus.healthBonus}", Color(0xFF286B45)))
+        if (bonus.openingShield > 0) add(FrameBonusBadge("SHIELD +${bonus.openingShield}", Color(0xFF1565C0)))
+        if (bonus.perRoundShield > 0) add(FrameBonusBadge("SHIELD +${bonus.perRoundShield}/rd", Color(0xFF0288D1)))
+        if (bonus.damageMitigation > 0) add(FrameBonusBadge("BLOCK -${bonus.damageMitigation}", Color(0xFF455A64)))
+        if (bonus.attackPowerBonus > 0) add(FrameBonusBadge("HIT +${bonus.attackPowerBonus}", Color(0xFFC62828)))
+        if (bonus.supportPowerBonus > 0) add(FrameBonusBadge("CARE +${bonus.supportPowerBonus}", Color(0xFF00838F)))
+        if (bonus.perRoundHeal > 0) add(FrameBonusBadge("HEAL +${bonus.perRoundHeal}/rd", Color(0xFF2E7D32)))
+        if (bonus.randomGrowthChancePercent > 0) add(FrameBonusBadge("GROW ${bonus.randomGrowthChancePercent}%", Color(0xFFE65100)))
+        if (bonus.deathScalingPerFallen > 0.0) add(FrameBonusBadge("SKULL x${formatFrameScale(bonus.deathScalingPerFallen)}", Color(0xFF4A2638)))
+    }
+}
+
+private data class FrameBonusBadge(
+    val text: String,
+    val color: Color
+)
+
+private fun formatFrameScale(value: Double): String =
+    if (value % 1.0 == 0.0) value.toInt().toString() else "%.1f".format(value)
 
 @Composable
 private fun StatBadge(

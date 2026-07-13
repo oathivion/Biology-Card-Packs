@@ -20,20 +20,14 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.wilddeck.app.data.CrashReporter
 import com.wilddeck.app.model.AnimalCard
 import com.wilddeck.app.model.CardFrame
 import com.wilddeck.app.model.MiniGameSession
@@ -294,8 +288,6 @@ fun MiniGameScreen(
 
 @Composable
 fun CreditsScreen() {
-    val context = LocalContext.current
-    var latestCrash by remember { mutableStateOf(CrashReporter.latestReport(context)) }
     Column(
         modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -319,37 +311,7 @@ fun CreditsScreen() {
                 Text("Glitch - Panacea")
                 Text("Glitch - Medusa")
                 Text("Glitch - Mare Tranquillitatis")
-                Text("Brian Ritchie - WildDecks Devlopment")
-            }
-        }
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.86f),
-            shape = RoundedCornerShape(16.dp)
-        ) {
-            Column(
-                Modifier.padding(18.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Text("Latest crash report", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
-                if (latestCrash.isNullOrBlank()) {
-                    Text("No crash report has been saved on this device.")
-                } else {
-                    Text(
-                        latestCrash!!.take(2400),
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                    if (latestCrash!!.length > 2400) {
-                        Text("Report shortened for display. Full report is saved in app files.")
-                    }
-                    OutlinedButton(
-                        onClick = {
-                            CrashReporter.clearReports(context)
-                            latestCrash = null
-                        },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Clear crash report") }
-                }
+                Text("Brian Ritchie - WildDecks Development")
             }
         }
     }

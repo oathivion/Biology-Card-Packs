@@ -130,7 +130,7 @@ object SampleData {
 
     val frames = listOf(
         CardFrame("black", "Black Border", "Quiet focus", 0xFF171717, true,
-            combatBonus = FrameCombatBonus(description = "No added power. A clean frame for testing raw card strength.")),
+            combatBonus = FrameCombatBonus(description = "No added power. A clean frame for comparing raw card strength.")),
         CardFrame("forest", "Forest Frame", "Living bark", 0xFF285943, true,
             combatBonus = FrameCombatBonus(healthBonus = 5, perRoundHeal = 2,
                 description = "+5 max health. At the start of each new round, this card heals 2 health.")),
